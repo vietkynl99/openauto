@@ -38,13 +38,13 @@ if(WIN32)
     set(WINSOCK2_LIBRARIES "ws2_32")
 endif(WIN32)
 
-if(RPI3_BUILD)
-    add_definitions(-DUSE_OMX -DOMX_SKIP64BIT -DRASPBERRYPI3)
+if(RPI_BUILD)
+    add_definitions(-DUSE_OMX -DOMX_SKIP64BIT)
     set(BCM_HOST_LIBRARIES "/opt/vc/lib/libbcm_host.so")
     set(BCM_HOST_INCLUDE_DIRS "/opt/vc/include")
     set(ILCLIENT_INCLUDE_DIRS "/opt/vc/src/hello_pi/libs/ilclient")
     set(ILCLIENT_LIBRARIES "/opt/vc/src/hello_pi/libs/ilclient/libilclient.a;/opt/vc/lib/libvcos.so;/opt/vc/lib/libvcilcs.a;/opt/vc/lib/libvchiq_arm.so")
-endif(RPI3_BUILD)
+endif(RPI_BUILD)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${Qt5Multimedia_INCLUDE_DIRS}
@@ -71,6 +71,10 @@ set(autoapp_include_directory ${include_directory}/f1x/openauto/autoapp)
 file(GLOB_RECURSE autoapp_source_files ${autoapp_sources_directory}/*.ui ${autoapp_sources_directory}/*.cpp ${autoapp_include_directory}/*.hpp ${common_include_directory}/*.hpp ${resources_directory}/*.qrc)
 
 add_executable(autoapp ${autoapp_source_files})
+
+file(GLOB_RECURSE autoapp_lib_source_files ${autoapp_sources_directory}/App.cpp ${autoapp_sources_directory}/Configuration/*.cpp ${autoapp_sources_directory}/Projection/*.cpp ${autoapp_sources_directory}/Service/*.cpp)
+file(GLOB_RECURSE autoapp_lib_inlcude_files ${autoapp_include_directory}/App.hpp ${autoapp_include_directory}/Configuration/*.hpp ${autoapp_include_directory}/Projection/*.hpp ${autoapp_include_directory}/Service/*.hpp)
+add_library(auto SHARED ${autoapp_lib_source_files} ${autoapp_lib_inlcude_files})
 
 target_link_libraries(autoapp
                         ${Boost_LIBRARIES}

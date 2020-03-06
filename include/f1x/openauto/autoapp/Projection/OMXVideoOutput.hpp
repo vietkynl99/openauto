@@ -26,6 +26,7 @@ extern "C"
 
 #include <mutex>
 #include <condition_variable>
+#include <functional>
 #include <thread>
 #include <boost/circular_buffer.hpp>
 #include <f1x/openauto/autoapp/Projection/VideoOutput.hpp>
@@ -39,15 +40,28 @@ namespace autoapp
 namespace projection
 {
 
+struct DestRect
+{
+    DestRect();
+    DestRect(OMX_S16 xOffset, OMX_S16 yOffset, OMX_S16 width, OMX_S16 height);
+
+    OMX_BOOL fullscreen;
+    OMX_S16 xOffset;
+    OMX_S16 yOffset;
+    OMX_S16 width;
+    OMX_S16 height;
+};
+
 class OMXVideoOutput: public VideoOutput
 {
 public:
-    OMXVideoOutput(configuration::IConfiguration::Pointer configuration);
+    OMXVideoOutput(configuration::IConfiguration::Pointer configuration, DestRect destRect=DestRect(), std::function<void(bool)> activeCallback=nullptr);
 
     bool open() override;
     bool init() override;
     void write(uint64_t timestamp, const aasdk::common::DataConstBuffer& buffer) override;
     void stop() override;
+    void setOpacity(OMX_U32 alpha);
 
 private:
     bool createComponents();
@@ -62,6 +76,9 @@ private:
     ILCLIENT_T* client_;
     COMPONENT_T* components_[5];
     TUNNEL_T tunnels_[4];
+    DestRect destRect_;
+    OMX_U32 alpha_;
+    std::function<void(bool)> activeCallback_;
 };
 
 }

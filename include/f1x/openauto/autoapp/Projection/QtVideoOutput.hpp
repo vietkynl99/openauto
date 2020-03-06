@@ -38,7 +38,7 @@ class QtVideoOutput: public QObject, public VideoOutput, boost::noncopyable
     Q_OBJECT
 
 public:
-    QtVideoOutput(configuration::IConfiguration::Pointer configuration);
+    QtVideoOutput(configuration::IConfiguration::Pointer configuration, QWidget* videoContainer=nullptr);
     bool open() override;
     bool init() override;
     void write(uint64_t timestamp, const aasdk::common::DataConstBuffer& buffer) override;
@@ -57,6 +57,7 @@ private:
     SequentialBuffer videoBuffer_;
     std::unique_ptr<QVideoWidget> videoWidget_;
     std::unique_ptr<QMediaPlayer> mediaPlayer_;
+    QWidget* videoContainer_;
 };
 
 }

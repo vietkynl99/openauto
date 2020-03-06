@@ -20,6 +20,7 @@
 
 #include <f1x/openauto/autoapp/Service/IServiceFactory.hpp>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
+#include <f1x/openauto/autoapp/Projection/OMXVideoOutput.hpp>
 
 namespace f1x
 {
@@ -33,8 +34,13 @@ namespace service
 class ServiceFactory: public IServiceFactory
 {
 public:
-    ServiceFactory(boost::asio::io_service& ioService, configuration::IConfiguration::Pointer configuration);
+    ServiceFactory(boost::asio::io_service& ioService, configuration::IConfiguration::Pointer configuration, QWidget* activeArea=nullptr, std::function<void(bool)> activeCallback=nullptr);
     ServiceList create(aasdk::messenger::IMessenger::Pointer messenger) override;
+    void setOpacity(unsigned int alpha);
+    static QRect mapActiveAreaToGlobal(QWidget* activeArea);
+#ifdef USE_OMX
+    static projection::DestRect QRectToDestRect(QRect rect);
+#endif
 
 private:
     IService::Pointer createVideoService(aasdk::messenger::IMessenger::Pointer messenger);
@@ -44,6 +50,12 @@ private:
 
     boost::asio::io_service& ioService_;
     configuration::IConfiguration::Pointer configuration_;
+    QWidget* activeArea_;
+    QRect screenGeometry_;
+    std::function<void(bool)> activeCallback_;
+#ifdef USE_OMX
+    std::shared_ptr<projection::OMXVideoOutput> omxVideoOutput_;
+#endif
 };
 
 }

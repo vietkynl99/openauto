@@ -29,8 +29,9 @@ namespace autoapp
 namespace projection
 {
 
-QtVideoOutput::QtVideoOutput(configuration::IConfiguration::Pointer configuration)
+QtVideoOutput::QtVideoOutput(configuration::IConfiguration::Pointer configuration, QWidget* videoContainer)
     : VideoOutput(std::move(configuration))
+    , videoContainer_(videoContainer)
 {
     this->moveToThread(QApplication::instance()->thread());
     connect(this, &QtVideoOutput::startPlayback, this, &QtVideoOutput::onStartPlayback, Qt::QueuedConnection);
@@ -42,7 +43,7 @@ QtVideoOutput::QtVideoOutput(configuration::IConfiguration::Pointer configuratio
 void QtVideoOutput::createVideoOutput()
 {
     OPENAUTO_LOG(debug) << "[QtVideoOutput] create.";
-    videoWidget_ = std::make_unique<QVideoWidget>();
+    videoWidget_ = std::make_unique<QVideoWidget>(videoContainer_);
     mediaPlayer_ = std::make_unique<QMediaPlayer>(nullptr, QMediaPlayer::StreamPlayback);
 }
 
@@ -70,10 +71,17 @@ void QtVideoOutput::write(uint64_t, const aasdk::common::DataConstBuffer& buffer
 
 void QtVideoOutput::onStartPlayback()
 {
-    videoWidget_->setAspectRatioMode(Qt::IgnoreAspectRatio);
-    videoWidget_->setFocus();
-    videoWidget_->setWindowFlags(Qt::WindowStaysOnTopHint);
-    videoWidget_->setFullScreen(true);
+    if (videoContainer_ == nullptr)
+    {
+        videoWidget_->setAspectRatioMode(Qt::IgnoreAspectRatio);
+        videoWidget_->setFocus();
+        videoWidget_->setWindowFlags(Qt::WindowStaysOnTopHint);
+        videoWidget_->setFullScreen(true);
+    }
+    else
+    {
+        videoWidget_->resize(videoContainer_->size());
+    }
     videoWidget_->show();
 
     mediaPlayer_->setVideoOutput(videoWidget_.get());

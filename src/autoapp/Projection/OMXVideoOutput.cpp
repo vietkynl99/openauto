@@ -36,6 +36,22 @@ namespace autoapp
 namespace projection
 {
 
+DestRect::DestRect()
+    : fullscreen(OMX_TRUE)
+{
+
+}
+
+DestRect::DestRect(OMX_S16 _xOffset, OMX_S16 _yOffset, OMX_S16 _width, OMX_S16 _height)
+    : fullscreen(OMX_FALSE)
+    , xOffset(_xOffset)
+    , yOffset(_yOffset)
+    , width(_width)
+    , height(_height)
+{
+
+}
+
 namespace VideoComponent
 {
     static constexpr uint32_t DECODER = 0;
@@ -44,11 +60,14 @@ namespace VideoComponent
     static constexpr uint32_t SCHEDULER = 3;
 }
 
-OMXVideoOutput::OMXVideoOutput(configuration::IConfiguration::Pointer configuration)
+OMXVideoOutput::OMXVideoOutput(configuration::IConfiguration::Pointer configuration, DestRect destRect, std::function<void(bool)> activeCallback)
     : VideoOutput(std::move(configuration))
     , isActive_(false)
     , portSettingsChanged_(false)
     , client_(nullptr)
+    , destRect_(destRect)
+    , alpha_(255)
+    , activeCallback_(activeCallback)
 {
     memset(components_, 0, sizeof(components_));
     memset(tunnels_, 0, sizeof(tunnels_));
@@ -95,6 +114,10 @@ bool OMXVideoOutput::open()
     }
 
     isActive_ = true;
+    if(this->activeCallback_ != nullptr)
+    {
+        this->activeCallback_(isActive_);
+    }
     return true;
 }
 
@@ -115,9 +138,19 @@ bool OMXVideoOutput::setupDisplayRegion()
     displayRegion.nVersion.nVersion = OMX_VERSION;
     displayRegion.nPortIndex = 90;
     displayRegion.layer = static_cast<OMX_S32>(configuration_->getOMXLayerIndex());
-    displayRegion.fullscreen = OMX_TRUE;
+    displayRegion.fullscreen = destRect_.fullscreen;
     displayRegion.noaspect = OMX_TRUE;
     displayRegion.set = static_cast<OMX_DISPLAYSETTYPE >(OMX_DISPLAY_SET_FULLSCREEN | OMX_DISPLAY_SET_NOASPECT | OMX_DISPLAY_SET_LAYER);    
+
+    if (destRect_.fullscreen == OMX_FALSE)
+    {
+        displayRegion.alpha = alpha_;
+        displayRegion.dest_rect.x_offset = destRect_.xOffset;
+        displayRegion.dest_rect.y_offset = destRect_.yOffset;
+        displayRegion.dest_rect.width = destRect_.width;
+        displayRegion.dest_rect.height = destRect_.height;
+        displayRegion.set = static_cast<OMX_DISPLAYSETTYPE >(displayRegion.set | OMX_DISPLAY_SET_ALPHA | OMX_DISPLAY_SET_DEST_RECT);
+    }
 
     return OMX_SetConfig(ilclient_get_handle(components_[VideoComponent::RENDERER]), OMX_IndexConfigDisplayRegion, &displayRegion) == OMX_ErrorNone;
 }
@@ -186,6 +219,10 @@ void OMXVideoOutput::stop()
     if(isActive_)
     {
         isActive_ = false;
+        if(this->activeCallback_ != nullptr)
+        {
+            this->activeCallback_(isActive_);
+        }
 
         ilclient_disable_tunnel(&tunnels_[0]);
         ilclient_disable_tunnel(&tunnels_[1]);
@@ -199,6 +236,27 @@ void OMXVideoOutput::stop()
         ilclient_cleanup_components(components_);
         OMX_Deinit();
         ilclient_destroy(client_);
+        client_ = nullptr;
+
+        portSettingsChanged_ = false;
+    }
+}
+
+void OMXVideoOutput::setOpacity(OMX_U32 alpha)
+{
+    std::lock_guard<decltype(mutex_)> lock(mutex_);
+
+    alpha_ = alpha;
+    if(isActive_)
+    {
+        OMX_CONFIG_DISPLAYREGIONTYPE displayRegion;
+        displayRegion.nSize = sizeof(OMX_CONFIG_DISPLAYREGIONTYPE);
+        displayRegion.nVersion.nVersion = OMX_VERSION;
+        displayRegion.nPortIndex = 90;
+        displayRegion.alpha = alpha_;
+        displayRegion.set = static_cast<OMX_DISPLAYSETTYPE >(OMX_DISPLAY_SET_ALPHA);
+
+        OMX_SetConfig(ilclient_get_handle(components_[VideoComponent::RENDERER]), OMX_IndexConfigDisplayRegion, &displayRegion) == OMX_ErrorNone;
     }
 }
 
