@@ -58,7 +58,7 @@ ServiceFactory::ServiceFactory(boost::asio::io_service& ioService, configuration
 #ifdef USE_OMX
     , omxVideoOutput_(std::make_shared<projection::OMXVideoOutput>(configuration_, this->QRectToDestRect(screenGeometry_), activeCallback_))
 #endif
-    , nightMode_(nightMode) 
+    , nightMode_(nightMode)
 {
 
 }
@@ -70,8 +70,11 @@ ServiceList ServiceFactory::create(aasdk::messenger::IMessenger::Pointer messeng
     projection::IAudioInput::Pointer audioInput(new projection::QtAudioInput(1, 16, 16000), std::bind(&QObject::deleteLater, std::placeholders::_1));
     serviceList.emplace_back(std::make_shared<AudioInputService>(ioService_, messenger, std::move(audioInput)));
     this->createAudioServices(serviceList, messenger);
-    sensorService_ = std::make_shared<SensorService>(ioService_, messenger, nightMode_);
-    serviceList.emplace_back(sensorService_);
+
+    std::shared_ptr<SensorService> sensorService = std::make_shared<SensorService>(ioService_, messenger, nightMode_);
+    sensorService_ = sensorService;
+    serviceList.emplace_back(sensorService);
+
     serviceList.emplace_back(this->createVideoService(messenger));
     serviceList.emplace_back(this->createBluetoothService(messenger));
     serviceList.emplace_back(this->createInputService(messenger));
@@ -187,7 +190,7 @@ void ServiceFactory::resize()
 void ServiceFactory::setNightMode(bool nightMode)
 {
     nightMode_ = nightMode;
-    if (sensorService_ != nullptr) sensorService_->setNightMode(nightMode_);
+    if (std::shared_ptr<SensorService> sensorService = sensorService_.lock()) sensorService->setNightMode(nightMode_);
 }
 
 QRect ServiceFactory::mapActiveAreaToGlobal(QWidget* activeArea)

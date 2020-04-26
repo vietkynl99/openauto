@@ -65,7 +65,7 @@ private:
     projection::QtVideoOutput *qtVideoOutput_;
 #endif
     bool nightMode_;
-    std::shared_ptr<SensorService> sensorService_;
+    std::weak_ptr<SensorService> sensorService_;
 };
 
 }
