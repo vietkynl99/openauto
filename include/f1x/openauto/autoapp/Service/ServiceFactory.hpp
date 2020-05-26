@@ -22,6 +22,8 @@
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 #include <f1x/openauto/autoapp/Projection/InputDevice.hpp>
 #include <f1x/openauto/autoapp/Projection/OMXVideoOutput.hpp>
+#include <f1x/openauto/autoapp/Projection/GSTVideoOutput.hpp>
+#include <QGst/Quick/VideoSurface>
 #include <f1x/openauto/autoapp/Projection/QtVideoOutput.hpp>
 #include <f1x/openauto/autoapp/Service/SensorService.hpp>
 
@@ -61,6 +63,8 @@ private:
     std::shared_ptr<projection::InputDevice> inputDevice_;
 #ifdef USE_OMX
     std::shared_ptr<projection::OMXVideoOutput> omxVideoOutput_;
+#elif defined USE_GST
+    std::shared_ptr<projection::GSTVideoOutput> gstVideoOutput_;
 #else
     projection::QtVideoOutput *qtVideoOutput_;
 #endif
