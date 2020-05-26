@@ -84,7 +84,6 @@ target_link_libraries(autoapp aasdk libusb
                         ${RTAUDIO_LIBRARIES}
 			)
 
-
 if(libomx_FOUND)
 	target_link_libraries(autoapp omx)
 endif()
@@ -104,4 +103,3 @@ target_link_libraries(btservice
 
 install(TARGETS autoapp btservice
 	RUNTIME DESTINATION bin)
-

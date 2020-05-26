@@ -32,8 +32,6 @@ find_path(ILCLIENT_LIB_DIR
 	src/hello_pi/libs/ilclient
 )
 
-
-
 if (BCM_HOST_INCLUDE_DIR AND ILCLIENT_INCLUDE_DIR AND BCM_HOST_LIB_DIR AND ILCLIENT_LIB_DIR)
 	set(libomx_FOUND TRUE)
 endif()
@@ -67,4 +65,3 @@ if (libomx_FOUND)
 	)
 
 endif()
-

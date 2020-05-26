@@ -41,4 +41,3 @@ else()
 endif()
 
 mark_as_advanced(AASDK_INCLUDE_DIRS AASDK_LIBRARIES)
-
