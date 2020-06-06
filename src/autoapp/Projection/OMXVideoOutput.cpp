@@ -262,19 +262,19 @@ void OMXVideoOutput::setOpacity(OMX_U32 alpha)
 
 bool OMXVideoOutput::createComponents()
 {
-    if(ilclient_create_component(client_, &components_[VideoComponent::DECODER], "video_decode", static_cast<ILCLIENT_CREATE_FLAGS_T>(ILCLIENT_DISABLE_ALL_PORTS | ILCLIENT_ENABLE_INPUT_BUFFERS)) != 0)
+    if(ilclient_create_component(client_, &components_[VideoComponent::DECODER], const_cast<char*>("video_decode"), static_cast<ILCLIENT_CREATE_FLAGS_T>(ILCLIENT_DISABLE_ALL_PORTS | ILCLIENT_ENABLE_INPUT_BUFFERS)) != 0)
     {
         OPENAUTO_LOG(error) << "[OMXVideoOutput] video decode component creation failed.";
         return false;
     }
 
-    if(ilclient_create_component(client_, &components_[VideoComponent::RENDERER], "video_render", ILCLIENT_DISABLE_ALL_PORTS) != 0)
+    if(ilclient_create_component(client_, &components_[VideoComponent::RENDERER], const_cast<char*>("video_render"), ILCLIENT_DISABLE_ALL_PORTS) != 0)
     {
         OPENAUTO_LOG(error) << "[OMXVideoOutput] video renderer component creation failed.";
         return false;
     }
 
-    if(ilclient_create_component(client_, &components_[VideoComponent::CLOCK], "clock", ILCLIENT_DISABLE_ALL_PORTS) != 0)
+    if(ilclient_create_component(client_, &components_[VideoComponent::CLOCK], const_cast<char*>("clock"), ILCLIENT_DISABLE_ALL_PORTS) != 0)
     {
         OPENAUTO_LOG(error) << "[OMXVideoOutput] clock component creation failed.";
         return false;
@@ -286,7 +286,7 @@ bool OMXVideoOutput::createComponents()
         return false;
     }
 
-    if(ilclient_create_component(client_, &components_[VideoComponent::SCHEDULER], "video_scheduler", ILCLIENT_DISABLE_ALL_PORTS) != 0)
+    if(ilclient_create_component(client_, &components_[VideoComponent::SCHEDULER], const_cast<char*>("video_scheduler"), ILCLIENT_DISABLE_ALL_PORTS) != 0)
     {
         OPENAUTO_LOG(error) << "[OMXVideoOutput] video scheduler component creation failed.";
         return false;
