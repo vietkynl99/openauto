@@ -4,3 +4,5 @@
 lib/
 bin/
 CMakeLists.txt.user
+cmake-build-*/
+.idea/

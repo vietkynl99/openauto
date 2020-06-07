@@ -1,7 +1,7 @@
 set (AASDK_DIR ~/aasdk)
 
 find_path(AASDK_INCLUDE_DIR
-	f1x/aasdk/Version.hpp
+	aasdk/Version.hpp
 	PATHS ${AASDK_DIR}
 	PATH_SUFFIXES include
 )
