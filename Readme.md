@@ -9,6 +9,26 @@ OpenAuto is an AndroidAuto(tm) headunit emulator based on aasdk library and Qt l
 
 [See demo video](https://www.youtube.com/watch?v=k9tKRqIkQs8)
 
+### Build Guide
+#### Local build instructions for Raspberry Pi
+
+```sudo apt-get update
+sudo apt-get -y install cmake build-essential git
+
+sudo apt-get install libboost-all-dev libusb-1.0.0-dev libssl-dev cmake libprotobuf-dev protobuf-c-compiler protobuf-compiler libqt5multimedia5 libqt5multimedia5-plugins libqt5multimediawidgets5 qtmultimedia5-dev libqt5bluetooth5 libqt5bluetooth5-bin qtconnectivity5-dev pulseaudio librtaudio-dev
+
+git clone https://github.com/OpenDsh/openauto
+
+mkdir openauto_build; cd openauto_build
+
+cmake -DCMAKE_BUILD_TYPE=Release -DRPI3_BUILD=TRUE -DAASDK_INCLUDE_DIRS="../aasdk/include" -DAASDK_LIBRARIES="../aasdk/lib/libaasdk.so" -DAASDK_PROTO_INCLUDE_DIRS="../aasdk" -DAASDK_PROTO_LIBRARIES="../aasdk/lib/libaasdk_proto.so" ../openauto
+
+make -j2
+sudo make install
+```
+
+The executable binary can then be found at ~/openauto/bin/autoapp
+
 ### Supported functionalities
  - 480p, 720p and 1080p with 30 or 60 FPS
  - RaspberryPI 3 hardware acceleration support to decode video stream (up to 1080p@60!)
