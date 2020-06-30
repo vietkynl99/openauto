@@ -67,12 +67,3 @@ Copyrights (c) 2018 f1x.studio (Michal Szwaj)
 
 ### Remarks
 **This software is not certified by Google Inc. It is created for R&D purposes and may not work as expected by the original authors. Do not use while driving. You use this software at your own risk.**
-
-### Support OpenAuto Pro
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=R4HXE5ESDR4U4)
-
-**OpenAuto Pro version** provides features like brightness control, volume control, support of Kodi and integration with the Raspberry PI OS (Raspbian Desktop). [See how it works at OpenAuto Pro overview video](https://www.youtube.com/watch?v=9sTOMI1qTiA)
-
-If you are looking for the car power supply with ignition state detection [go to the Blue Wave Studio page](https://bluewavestudio.io/index.php/bluewave-shop)
-
-For support of other platforms please contact me at f1xstudiopl@gmail.com
