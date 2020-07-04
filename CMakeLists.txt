@@ -46,11 +46,18 @@ find_package(OpenSSL REQUIRED)
 find_package(rtaudio REQUIRED)
 find_package(aasdk REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(libomx)
 
 if(WIN32)
     set(WINSOCK2_LIBRARIES "ws2_32")
 endif(WIN32)
+
+if(RPI_BUILD)
+    add_definitions(-DUSE_OMX -DOMX_SKIP64BIT)
+    set(BCM_HOST_LIBRARIES "/opt/vc/lib/libbcm_host.so")
+    set(BCM_HOST_INCLUDE_DIRS "/opt/vc/include")
+    set(ILCLIENT_INCLUDE_DIRS "/opt/vc/src/hello_pi/libs/ilclient")
+    set(ILCLIENT_LIBRARIES "/opt/vc/src/hello_pi/libs/ilclient/libilclient.a;/opt/vc/lib/libvcos.so;/opt/vc/lib/libvcilcs.a;/opt/vc/lib/libvchiq_arm.so")
+endif(RPI_BUILD)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${Qt5Multimedia_INCLUDE_DIRS}
@@ -61,6 +68,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${PROTOBUF_INCLUDE_DIR}
                     ${OPENSSL_INCLUDE_DIR}
                     ${RTAUDIO_INCLUDE_DIRS}
+                    ${BCM_HOST_INCLUDE_DIRS}
+                    ${ILCLIENT_INCLUDE_DIRS}
                     ${include_directory})
 								
 link_directories(${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
@@ -80,13 +89,11 @@ target_link_libraries(autoapp aasdk libusb
                         ${Qt5Bluetooth_LIBRARIES}
                         ${PROTOBUF_LIBRARIES}
                         ${ZLIB_LIBRARIES}
+                        ${BCM_HOST_LIBRARIES}
+                        ${ILCLIENT_LIBRARIES}
                         ${WINSOCK2_LIBRARIES}
                         ${RTAUDIO_LIBRARIES}
 			)
-
-if(libomx_FOUND)
-	target_link_libraries(autoapp omx)
-endif()
 
 set(btservice_sources_directory ${sources_directory}/btservice)
 set(btservice_include_directory ${include_directory}/f1x/openauto/btservice)
