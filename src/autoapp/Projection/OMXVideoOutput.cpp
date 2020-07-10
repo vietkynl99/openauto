@@ -114,10 +114,12 @@ bool OMXVideoOutput::open()
     }
 
     isActive_ = true;
-    if(this->activeCallback_ != nullptr)
+
+    if(activeCallback_ != nullptr)
     {
-        this->activeCallback_(isActive_);
+        activeCallback_(true);
     }
+
     return true;
 }
 
@@ -142,7 +144,7 @@ bool OMXVideoOutput::setupDisplayRegion()
     displayRegion.noaspect = OMX_TRUE;
     displayRegion.set = static_cast<OMX_DISPLAYSETTYPE >(OMX_DISPLAY_SET_FULLSCREEN | OMX_DISPLAY_SET_NOASPECT | OMX_DISPLAY_SET_LAYER);    
 
-    if (destRect_.fullscreen == OMX_FALSE)
+    if(displayRegion.fullscreen == OMX_FALSE)
     {
         displayRegion.alpha = alpha_;
         displayRegion.dest_rect.x_offset = destRect_.xOffset;
@@ -214,15 +216,16 @@ void OMXVideoOutput::stop()
 {
     OPENAUTO_LOG(info) << "[OMXVideoOutput] stop.";
 
+    if(activeCallback_ != nullptr)
+    {
+        activeCallback_(false);
+    }
+
     std::lock_guard<decltype(mutex_)> lock(mutex_);
 
     if(isActive_)
     {
         isActive_ = false;
-        if(this->activeCallback_ != nullptr)
-        {
-            this->activeCallback_(isActive_);
-        }
 
         ilclient_disable_tunnel(&tunnels_[0]);
         ilclient_disable_tunnel(&tunnels_[1]);
@@ -249,14 +252,18 @@ void OMXVideoOutput::setOpacity(OMX_U32 alpha)
     alpha_ = alpha;
     if(isActive_)
     {
-        OMX_CONFIG_DISPLAYREGIONTYPE displayRegion;
-        displayRegion.nSize = sizeof(OMX_CONFIG_DISPLAYREGIONTYPE);
-        displayRegion.nVersion.nVersion = OMX_VERSION;
-        displayRegion.nPortIndex = 90;
-        displayRegion.alpha = alpha_;
-        displayRegion.set = static_cast<OMX_DISPLAYSETTYPE >(OMX_DISPLAY_SET_ALPHA);
+        this->setupDisplayRegion();
+    }
+}
 
-        OMX_SetConfig(ilclient_get_handle(components_[VideoComponent::RENDERER]), OMX_IndexConfigDisplayRegion, &displayRegion) == OMX_ErrorNone;
+void OMXVideoOutput::setDestRect(DestRect destRect)
+{
+    std::lock_guard<decltype(mutex_)> lock(mutex_);
+
+    destRect_ = destRect;
+    if(isActive_)
+    {
+        this->setupDisplayRegion();
     }
 }
 

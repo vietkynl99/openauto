@@ -31,6 +31,7 @@
 #include <f1x/openauto/autoapp/Service/BluetoothService.hpp>
 #include <f1x/openauto/autoapp/Service/InputService.hpp>
 #include <f1x/openauto/autoapp/Projection/QtVideoOutput.hpp>
+#include <f1x/openauto/autoapp/Projection/GSTVideoOutput.hpp>
 #include <f1x/openauto/autoapp/Projection/OMXVideoOutput.hpp>
 #include <f1x/openauto/autoapp/Projection/RtAudioOutput.hpp>
 #include <f1x/openauto/autoapp/Projection/QtAudioOutput.hpp>
@@ -49,15 +50,20 @@ namespace autoapp
 namespace service
 {
 
-ServiceFactory::ServiceFactory(boost::asio::io_service& ioService, configuration::IConfiguration::Pointer configuration, QWidget *activeArea, std::function<void(bool)> activeCallback)
+ServiceFactory::ServiceFactory(boost::asio::io_service& ioService, configuration::IConfiguration::Pointer configuration, QWidget *activeArea, std::function<void(bool)> activeCallback, bool nightMode)
     : ioService_(ioService)
     , configuration_(std::move(configuration))
     , activeArea_(activeArea)
     , screenGeometry_(this->mapActiveAreaToGlobal(activeArea_))
     , activeCallback_(activeCallback)
-#ifdef USE_OMX
+#if defined USE_OMX
     , omxVideoOutput_(std::make_shared<projection::OMXVideoOutput>(configuration_, this->QRectToDestRect(screenGeometry_), activeCallback_))
+#elif defined USE_GST
+    , gstVideoOutput_((QGst::init(nullptr, nullptr), std::make_shared<projection::GSTVideoOutput>(configuration_, activeArea_, activeCallback_)))
+#else
+    , qtVideoOutput_(nullptr)
 #endif
+    , nightMode_(nightMode)
 {
 
 }
@@ -69,7 +75,11 @@ ServiceList ServiceFactory::create(aasdk::messenger::IMessenger::Pointer messeng
     projection::IAudioInput::Pointer audioInput(new projection::QtAudioInput(1, 16, 16000), std::bind(&QObject::deleteLater, std::placeholders::_1));
     serviceList.emplace_back(std::make_shared<AudioInputService>(ioService_, messenger, std::move(audioInput)));
     this->createAudioServices(serviceList, messenger);
-    serviceList.emplace_back(std::make_shared<SensorService>(ioService_, messenger));
+
+    std::shared_ptr<SensorService> sensorService = std::make_shared<SensorService>(ioService_, messenger, nightMode_);
+    sensorService_ = sensorService;
+    serviceList.emplace_back(sensorService);
+
     serviceList.emplace_back(this->createVideoService(messenger));
     serviceList.emplace_back(this->createBluetoothService(messenger));
     serviceList.emplace_back(this->createInputService(messenger));
@@ -79,11 +89,22 @@ ServiceList ServiceFactory::create(aasdk::messenger::IMessenger::Pointer messeng
 
 IService::Pointer ServiceFactory::createVideoService(aasdk::messenger::IMessenger::Pointer messenger)
 {
-#ifdef USE_OMX
+#if defined USE_OMX
     auto videoOutput(omxVideoOutput_);
+#elif defined USE_GST
+    auto videoOutput(gstVideoOutput_);
 #else
-    auto qtVideoOutput = new projection::QtVideoOutput(configuration_, activeArea_);
-    projection::IVideoOutput::Pointer videoOutput(qtVideoOutput, std::bind(&QObject::deleteLater, std::placeholders::_1));
+    qtVideoOutput_ = new projection::QtVideoOutput(configuration_, activeArea_);
+    if(activeCallback_ != nullptr)
+    {
+        QObject::connect(qtVideoOutput_, &projection::QtVideoOutput::startPlayback, [callback = activeCallback_]() { callback(true); });
+        QObject::connect(qtVideoOutput_, &projection::QtVideoOutput::stopPlayback, [this]() {
+            activeCallback_(false);
+            qtVideoOutput_->disconnect();
+            qtVideoOutput_ = nullptr;
+        });
+    }
+    projection::IVideoOutput::Pointer videoOutput(qtVideoOutput_, std::bind(&QObject::deleteLater, std::placeholders::_1));
 #endif
     return std::make_shared<VideoService>(ioService_, messenger, std::move(videoOutput));
 }
@@ -128,9 +149,9 @@ IService::Pointer ServiceFactory::createInputService(aasdk::messenger::IMessenge
     }
 
     QObject* inputObject = activeArea_ == nullptr ? qobject_cast<QObject*>(QApplication::instance()) : qobject_cast<QObject*>(activeArea_);
-    projection::IInputDevice::Pointer inputDevice(std::make_shared<projection::InputDevice>(*inputObject, configuration_, std::move(screenGeometry_), std::move(videoGeometry)));
+    inputDevice_ = std::make_shared<projection::InputDevice>(*inputObject, configuration_, std::move(screenGeometry_), std::move(videoGeometry));
 
-    return std::make_shared<InputService>(ioService_, messenger, std::move(inputDevice));
+    return std::make_shared<InputService>(ioService_, messenger, std::move(projection::IInputDevice::Pointer(inputDevice_)));
 }
 
 void ServiceFactory::createAudioServices(ServiceList& serviceList, aasdk::messenger::IMessenger::Pointer messenger)
@@ -163,13 +184,58 @@ void ServiceFactory::createAudioServices(ServiceList& serviceList, aasdk::messen
 void ServiceFactory::setOpacity(unsigned int alpha)
 {
 #ifdef USE_OMX
-    omxVideoOutput_->setOpacity(alpha);
+    if(omxVideoOutput_ != nullptr)
+    {
+        omxVideoOutput_->setOpacity(alpha);
+    }
 #endif
+}
+
+void ServiceFactory::resize()
+{
+    screenGeometry_ = this->mapActiveAreaToGlobal(activeArea_);
+    if(inputDevice_ != nullptr)
+    {
+        inputDevice_->setTouchscreenGeometry(screenGeometry_);
+    }
+#if defined USE_OMX
+    if(omxVideoOutput_ != nullptr)
+    {
+        omxVideoOutput_->setDestRect(this->QRectToDestRect(screenGeometry_));
+    }
+#elif defined USE_GST
+    if(gstVideoOutput_ != nullptr)
+    {
+        gstVideoOutput_->resize();
+    }
+#else
+    if(qtVideoOutput_ != nullptr)
+    {
+        qtVideoOutput_->resize();
+    }
+#endif
+}
+
+void ServiceFactory::setNightMode(bool nightMode)
+{
+    nightMode_ = nightMode;
+    if(std::shared_ptr<SensorService> sensorService = sensorService_.lock())
+    {
+        sensorService->setNightMode(nightMode_);
+    }
+}
+
+void ServiceFactory::sendKeyEvent(QKeyEvent* event)
+{
+    if(inputDevice_ != nullptr)
+    {
+        inputDevice_->eventFilter(activeArea_, event);
+    }
 }
 
 QRect ServiceFactory::mapActiveAreaToGlobal(QWidget* activeArea)
 {
-    if (activeArea == nullptr)
+    if(activeArea == nullptr)
     {
         QScreen* screen = QGuiApplication::primaryScreen();
         return screen == nullptr ? QRect(0, 0, 1, 1) : screen->geometry();

@@ -16,13 +16,35 @@
 *  along with openauto. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_GST
 #pragma once
 
-#include <QMediaPlayer>
-#include <QVideoWidget>
+#include <mutex>
+#include <condition_variable>
+#include <functional>
+#include <thread>
+#include <boost/circular_buffer.hpp>
 #include <boost/noncopyable.hpp>
 #include <f1x/openauto/autoapp/Projection/VideoOutput.hpp>
-#include <f1x/openauto/autoapp/Projection/SequentialBuffer.hpp>
+#include <gst/gst.h>
+#include <gst/app/gstappsrc.h>
+#include <gst/app/gstappsink.h>
+#include <gst/video/video.h>
+#include <QGlib/Error>
+#include <QGlib/Connect>
+#include <QGst/Init>
+#include <QGst/Bus>
+#include <QGst/Pipeline>
+#include <QGst/Parse>
+#include <QGst/Message>
+#include <QGst/Utils/ApplicationSink>
+#include <QGst/Utils/ApplicationSource>
+#include <QGst/Ui/VideoWidget>
+#include <QGst/ElementFactory>
+#include <QGst/Quick/VideoSurface>
+#include <QtQml/QQmlContext>
+#include <QtQuickWidgets/QQuickWidget>
+#include <QApplication>
 
 namespace f1x
 {
@@ -33,12 +55,13 @@ namespace autoapp
 namespace projection
 {
 
-class QtVideoOutput: public QObject, public VideoOutput, boost::noncopyable
+class GSTVideoOutput: public QObject, public VideoOutput, boost::noncopyable
 {
     Q_OBJECT
 
 public:
-    QtVideoOutput(configuration::IConfiguration::Pointer configuration, QWidget* videoContainer=nullptr);
+    GSTVideoOutput(configuration::IConfiguration::Pointer configuration, QWidget* videoContainer=nullptr, std::function<void(bool)> activeCallback=nullptr);
+    ~GSTVideoOutput();
     bool open() override;
     bool init() override;
     void write(uint64_t timestamp, const aasdk::common::DataConstBuffer& buffer) override;
@@ -50,18 +73,25 @@ signals:
     void stopPlayback();
 
 protected slots:
-    void createVideoOutput();
     void onStartPlayback();
     void onStopPlayback();
 
 private:
-    SequentialBuffer videoBuffer_;
-    std::unique_ptr<QVideoWidget> videoWidget_;
-    std::unique_ptr<QMediaPlayer> mediaPlayer_;
+    static GstPadProbeReturn convertProbe(GstPad* pad, GstPadProbeInfo* info, void*);
+    static gboolean busCallback(GstBus*, GstMessage* message, gpointer*);
+
+    QGst::ElementPtr videoSink_;
+    QQuickWidget* videoWidget_;
+    GstElement* vidPipeline_;
+    GstAppSrc* vidSrc_;
     QWidget* videoContainer_;
+    QGst::Quick::VideoSurface* surface_;
+    std::function<void(bool)> activeCallback_;
 };
 
 }
 }
 }
 }
+
+#endif
