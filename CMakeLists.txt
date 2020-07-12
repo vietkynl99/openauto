@@ -10,21 +10,12 @@ project(openauto CXX)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
-set(base_directory ${CMAKE_CURRENT_SOURCE_DIR})
-set(resources_directory ${base_directory}/assets)
-set(sources_directory ${base_directory}/src)
-set(include_directory ${base_directory}/include)
-include(${base_directory}/cmake_modules/functions.cmake)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${base_directory}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${base_directory}/lib)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${base_directory}/bin)
-set(EXECUTABLE_OUTPUT_PATH ${base_directory}/bin)
-
-set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_USE_MULTITHREADED ON)
-set(Boost_USE_STATIC_RUNTIME OFF)
+set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake_modules/")
 SET(CMAKE_CXX_STANDARD 14)
@@ -33,34 +24,30 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_INIT} -Wall -pedantic")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-g -O3")
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 6.3)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
 endif()
 
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
 add_definitions(-DBOOST_ALL_DYN_LINK)
-
 find_package(Boost REQUIRED COMPONENTS system log OPTIONAL_COMPONENTS unit_test_framework)
+
 find_package(libusb-1.0 REQUIRED)
 find_package(Qt5 COMPONENTS Multimedia MultimediaWidgets Bluetooth Qml Quick QuickWidgets REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(rtaudio REQUIRED)
 find_package(aasdk REQUIRED)
-find_package(ZLIB REQUIRED)
-find_package(GObject)
+find_package(Threads)
 
-if(WIN32)
-    set(WINSOCK2_LIBRARIES "ws2_32")
-endif(WIN32)
+if(RPI_BUILD)
+    find_package(libomx)
+endif()
 
-if(RPI_BUILD AND NOT GST_BUILD)
-    add_definitions(-DUSE_OMX -DOMX_SKIP64BIT)
-    set(BCM_HOST_LIBRARIES "/opt/vc/lib/libbcm_host.so")
-    set(BCM_HOST_INCLUDE_DIRS "/opt/vc/include")
-    set(ILCLIENT_INCLUDE_DIRS "/opt/vc/src/hello_pi/libs/ilclient")
-    set(ILCLIENT_LIBRARIES "/opt/vc/src/hello_pi/libs/ilclient/libilclient.a;/opt/vc/lib/libvcos.so;/opt/vc/lib/libvcilcs.a;/opt/vc/lib/libvchiq_arm.so")
-endif(RPI_BUILD AND NOT GST_BUILD)
 if(GST_BUILD)
+    find_package(GObject)
     find_package(Qt5GStreamer)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GST REQUIRED
@@ -71,76 +58,16 @@ if(GST_BUILD)
     add_definitions(-DUSE_GST)
     if(RPI_BUILD)
         add_definitions(-DRPI)
+        include(${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/functions.cmake)
         findRpiRevision( RPI_REVISION )
         if(RPI_REVISION MATCHES "a03111" OR RPI_REVISION MATCHES "b03111" OR RPI_REVISION MATCHES "a03111")
             message("Raspberry Pi 4 Found")
             add_definitions(-DPI4)
         endif(RPI_REVISION MATCHES "a03111" OR RPI_REVISION MATCHES "b03111" OR RPI_REVISION MATCHES "a03111")
     endif(RPI_BUILD)
+message(STATUS "${GST_LIBRARIES}")
 endif(GST_BUILD)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR}
-                    ${Qt5Multimedia_INCLUDE_DIRS}
-                    ${Qt5MultimediaWidgets_INCLUDE_DIRS}
-                    ${Qt5Widgets_INCLUDE_DIRS}
-                    ${Qt5Bluetooth_INCLUDE_DIRS}
-                    ${QTGSTREAMER_INCLUDE_DIR}
-                    ${Boost_INCLUDE_DIRS}
-                    ${PROTOBUF_INCLUDE_DIR}
-                    ${OPENSSL_INCLUDE_DIR}
-                    ${RTAUDIO_INCLUDE_DIRS}
-                    ${BCM_HOST_INCLUDE_DIRS}
-                    ${ILCLIENT_INCLUDE_DIRS}
-                    ${GST_INCLUDE_DIRS}
-                    ${include_directory})
-
-link_directories(${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-
-set(common_include_directory ${include_directory}/f1x/openauto/Common)
-
-set(autoapp_sources_directory ${sources_directory}/autoapp)
-set(autoapp_include_directory ${include_directory}/f1x/openauto/autoapp)
-file(GLOB_RECURSE autoapp_source_files ${autoapp_sources_directory}/*.ui ${autoapp_sources_directory}/*.cpp ${autoapp_include_directory}/*.hpp ${common_include_directory}/*.hpp ${resources_directory}/*.qrc)
-
-add_executable(autoapp ${autoapp_source_files})
-
-message(STATUS "${GST_LIBRARIES}")
-target_link_libraries(autoapp aasdk libusb
-                        ${GST_LIBRARIES}
-                        ${Boost_LIBRARIES}
-                        ${Qt5Multimedia_LIBRARIES}
-                        ${Qt5MultimediaWidgets_LIBRARIES}
-                        ${Qt5QuickWidgets_LIBRARIES}
-                        ${Qt5Bluetooth_LIBRARIES}
-                        ${PROTOBUF_LIBRARIES}
-                        ${ZLIB_LIBRARIES}
-                        ${BCM_HOST_LIBRARIES}
-                        ${ILCLIENT_LIBRARIES}
-                        ${WINSOCK2_LIBRARIES}
-                        ${RTAUDIO_LIBRARIES}
-                        ${QTGLIB_LIBRARY}
-                        ${QTGLIB_LIBRARIES}
-                        ${QTGSTREAMER_LIBRARY}
-                        ${QTGSTREAMER_LIBRARIES}
-                        ${QTGSTREAMER_UI_LIBRARY}
-                        ${QTGSTREAMER_UI_LIBRARIES}
-                        ${QTGSTREAMER_QUICK_LIBRARIES}
-                        ${QTGSTREAMER_QUICK_LIBRARY}
-                        ${GOBJECT_LIBRARIES}
-			)
-
-set(btservice_sources_directory ${sources_directory}/btservice)
-set(btservice_include_directory ${include_directory}/f1x/openauto/btservice)
-file(GLOB_RECURSE btservice_source_files ${btservice_sources_directory}/*.cpp ${btservice_include_directory}/*.hpp ${common_include_directory}/*.hpp)
-
-add_executable(btservice ${btservice_source_files})
-
-target_link_libraries(btservice
-                        ${Boost_LIBRARIES}
-                        ${Qt5Bluetooth_LIBRARIES}
-                        ${Qt5MultimediaWidgets_LIBRARIES}
-                        ${PROTOBUF_LIBRARIES}
-)
-
-install(TARGETS autoapp btservice
-	RUNTIME DESTINATION bin)
+add_subdirectory(openauto)
+add_subdirectory(btservice)
+add_subdirectory(autoapp)
