@@ -33,22 +33,22 @@ int main(int argc, char* argv[])
     btservice::AndroidBluetoothServer androidBluetoothServer;
     if(!androidBluetoothServer.start(address, portNumber))
     {
-        OPENAUTO_LOG(error) << "[src] Server start failed.";
+        OPENAUTO_LOG(error) << "[btservice] Server start failed.";
         return 2;
     }
 
-    OPENAUTO_LOG(info) << "[src] Listening for connections, address: " << address.toString().toStdString()
+    OPENAUTO_LOG(info) << "[btservice] Listening for connections, address: " << address.toString().toStdString()
                        << ", port: " << portNumber;
 
     btservice::AndroidBluetoothService androidBluetoothService(portNumber);
     if(!androidBluetoothService.registerService(address))
     {
-        OPENAUTO_LOG(error) << "[src] Service registration failed.";
+        OPENAUTO_LOG(error) << "[btservice] Service registration failed.";
         return 1;
     }
     else
     {
-        OPENAUTO_LOG(info) << "[src] Service registered, port: " << portNumber;
+        OPENAUTO_LOG(info) << "[btservice] Service registered, port: " << portNumber;
     }
 
     qApplication.exec();
