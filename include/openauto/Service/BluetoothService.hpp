@@ -19,7 +19,7 @@
 #pragma once
 
 #include "aasdk/Channel/Bluetooth/BluetoothServiceChannel.hpp"
-#include "../Projection/IBluetoothDevice.hpp"
+#include "openauto/Projection/IBluetoothDevice.hpp"
 #include "IService.hpp"
 
 namespace openauto

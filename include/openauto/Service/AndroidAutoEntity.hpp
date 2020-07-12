@@ -23,7 +23,7 @@
 #include "aasdk/Channel/Control/IControlServiceChannel.hpp"
 #include "aasdk/Channel/Control/IControlServiceChannelEventHandler.hpp"
 #include "aasdk/Channel/AV/VideoServiceChannel.hpp"
-#include "../Configuration/IConfiguration.hpp"
+#include "openauto/Configuration/IConfiguration.hpp"
 #include "IAndroidAutoEntity.hpp"
 #include "IService.hpp"
 #include "IPinger.hpp"

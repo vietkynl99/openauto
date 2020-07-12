@@ -21,7 +21,7 @@
 #include <QObject>
 #include <QKeyEvent>
 #include "IInputDevice.hpp"
-#include "../Configuration/IConfiguration.hpp"
+#include "openauto/Configuration/IConfiguration.hpp"
 
 namespace openauto
 {

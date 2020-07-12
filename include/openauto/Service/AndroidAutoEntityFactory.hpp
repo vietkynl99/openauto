@@ -20,7 +20,7 @@
 
 #include <boost/asio.hpp>
 #include "aasdk/Transport/ITransport.hpp"
-#include "../Configuration/IConfiguration.hpp"
+#include "openauto/Configuration/IConfiguration.hpp"
 #include "IAndroidAutoEntityFactory.hpp"
 #include "IServiceFactory.hpp"
 

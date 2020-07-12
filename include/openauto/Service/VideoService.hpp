@@ -21,7 +21,7 @@
 #include <memory>
 #include "aasdk/Channel/AV/VideoServiceChannel.hpp"
 #include "aasdk/Channel/AV/IVideoServiceChannelEventHandler.hpp"
-#include "../Projection/IVideoOutput.hpp"
+#include "openauto/Projection/IVideoOutput.hpp"
 #include "IService.hpp"
 
 namespace openauto

@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "../Configuration/IConfiguration.hpp"
+#include "openauto/Configuration/IConfiguration.hpp"
 #include "IVideoOutput.hpp"
 
 namespace openauto

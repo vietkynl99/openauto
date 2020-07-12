@@ -21,8 +21,8 @@
 #include "aasdk_proto/ButtonCodeEnum.pb.h"
 #include "aasdk/Channel/Input/InputServiceChannel.hpp"
 #include "IService.hpp"
-#include "../Projection/IInputDevice.hpp"
-#include "../Projection/IInputDeviceEventHandler.hpp"
+#include "openauto/Projection/IInputDevice.hpp"
+#include "openauto/Projection/IInputDeviceEventHandler.hpp"
 
 namespace openauto
 {

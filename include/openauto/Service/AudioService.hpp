@@ -20,7 +20,7 @@
 
 #include "aasdk/Channel/AV/IAudioServiceChannel.hpp"
 #include "aasdk/Channel/AV/IAudioServiceChannelEventHandler.hpp"
-#include "../Projection/IAudioOutput.hpp"
+#include "openauto/Projection/IAudioOutput.hpp"
 #include "IService.hpp"
 
 namespace openauto
