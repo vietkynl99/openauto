@@ -25,7 +25,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-g -O3")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
 endif()
 
 set(Boost_USE_STATIC_LIBS OFF)
@@ -67,7 +67,6 @@ if(GST_BUILD)
     endif(RPI_BUILD)
 message(STATUS "${GST_LIBRARIES}")
 endif(GST_BUILD)
-								
 
 add_subdirectory(openauto)
 add_subdirectory(btservice)
