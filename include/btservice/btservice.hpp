@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QProcess> 
 #include <QBluetoothAddress>
 #include "OpenautoLog.hpp"
 #include "btservice/AndroidBluetoothService.hpp"
@@ -18,9 +19,10 @@ public:
 
 private:
     const uint16_t cServicePortNumber = 22;
-
+    void connectToBluetooth(QBluetoothAddress addr, QBluetoothAddress controller);
     openauto::btservice::AndroidBluetoothService androidBluetoothService_;
     openauto::btservice::AndroidBluetoothServer androidBluetoothServer_;
+    QProcess *btConnectProcess;
 };
 
 }
