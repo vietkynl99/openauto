@@ -163,7 +163,7 @@ void InputService::onButtonEvent(const projection::ButtonEvent& event)
     });
 }
 
-void InputService::sendButtonPress(aasdk::proto::enums::ButtonCode::Enum buttonCode, projection::WheelDirection wheelDirection)
+void InputService::sendButtonPress(aasdk::proto::enums::ButtonCode::Enum buttonCode, projection::WheelDirection wheelDirection, projection::ButtonEventType buttonEventType)
 {    
     OPENAUTO_LOG(info) << "[InputService] injecting button press";
     if(buttonCode == aasdk::proto::enums::ButtonCode::SCROLL_WHEEL)
@@ -173,12 +173,29 @@ void InputService::sendButtonPress(aasdk::proto::enums::ButtonCode::Enum buttonC
     }
     else
     {
-        onButtonEvent({projection::ButtonEventType::PRESS, projection::WheelDirection::NONE, buttonCode});
-        onButtonEvent({projection::ButtonEventType::RELEASE, projection::WheelDirection::NONE, buttonCode});
+        if(buttonEventType == projection::ButtonEventType::NONE){
+            onButtonEvent({projection::ButtonEventType::PRESS, projection::WheelDirection::NONE, buttonCode});
+            onButtonEvent({projection::ButtonEventType::RELEASE, projection::WheelDirection::NONE, buttonCode});
+        }
+        else
+        {
+            onButtonEvent({buttonEventType, projection::WheelDirection::NONE, buttonCode});
+        }
     }
 }
 
-void InputService::onTouchEvent(const projection::TouchEvent& event)
+void InputService::onTouchEvent(aasdk::proto::messages::InputEventIndication inputEventIndication)
+{
+
+    strand_.dispatch([this, self = this->shared_from_this(), inputEventIndication = std::move(inputEventIndication)]() {
+
+        auto promise = aasdk::channel::SendPromise::defer(strand_);
+        promise->then([]() {}, std::bind(&InputService::onChannelError, this->shared_from_this(), std::placeholders::_1));
+        channel_->sendInputEventIndication(inputEventIndication, std::move(promise));
+    });
+}
+
+void InputService::onMouseEvent(const projection::TouchEvent& event)
 {
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
 

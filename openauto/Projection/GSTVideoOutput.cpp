@@ -20,6 +20,7 @@
 #include "aasdk/Common/Data.hpp"
 #include "openauto/Projection/GSTVideoOutput.hpp"
 #include "OpenautoLog.hpp"
+#include <QTimer>
 
 namespace openauto
 {
@@ -90,6 +91,13 @@ GSTVideoOutput::~GSTVideoOutput()
 {
     gst_object_unref(vidPipeline_);
     gst_object_unref(vidSrc_);
+}
+
+void GSTVideoOutput::dumpDot(){
+    
+    gst_debug_bin_to_dot_file(GST_BIN(vidPipeline_), GST_DEBUG_GRAPH_SHOW_VERBOSE, "pipeline");
+        OPENAUTO_LOG(info) << "[GSTVideoOutput] Dumped dot debug info";
+
 }
 
 gboolean GSTVideoOutput::busCallback(GstBus*, GstMessage* message, gpointer*)
@@ -197,6 +205,7 @@ void GSTVideoOutput::onStartPlayback()
         videoWidget_->resize(videoContainer_->size());
     }
     videoWidget_->show();
+    QTimer::singleShot(10000, this, SLOT(dumpDot()));
 }
 
 void GSTVideoOutput::stop()

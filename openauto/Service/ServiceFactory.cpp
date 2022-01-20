@@ -30,6 +30,7 @@
 #include "openauto/Service/SensorService.hpp"
 #include "openauto/Service/BluetoothService.hpp"
 #include "openauto/Service/InputService.hpp"
+#include "openauto/Service/NavigationStatusService.hpp"
 #include "openauto/Projection/QtVideoOutput.hpp"
 #include "openauto/Projection/GSTVideoOutput.hpp"
 #include "openauto/Projection/OMXVideoOutput.hpp"
@@ -40,12 +41,13 @@
 #include "openauto/Projection/LocalBluetoothDevice.hpp"
 #include "openauto/Projection/RemoteBluetoothDevice.hpp"
 #include "openauto/Projection/DummyBluetoothDevice.hpp"
+#include "openauto/Service/IAndroidAutoInterface.hpp"
+
 
 namespace openauto
 {
 namespace service
 {
-
 ServiceFactory::ServiceFactory(boost::asio::io_service& ioService, configuration::IConfiguration::Pointer configuration, QWidget *activeArea, std::function<void(bool)> activeCallback, bool nightMode)
     : ioService_(ioService)
     , configuration_(std::move(configuration))
@@ -62,6 +64,7 @@ ServiceFactory::ServiceFactory(boost::asio::io_service& ioService, configuration
     , btservice_(configuration_)
     , nightMode_(nightMode)
 {
+    OPENAUTO_LOG(info) << "SERVICE FACTORY INITED";
 
 }
 
@@ -79,6 +82,13 @@ ServiceList ServiceFactory::create(aasdk::messenger::IMessenger::Pointer messeng
 
     serviceList.emplace_back(this->createVideoService(messenger));
     serviceList.emplace_back(this->createBluetoothService(messenger));
+    std::shared_ptr<NavigationStatusService> navStatusService = this->createNavigationStatusService(messenger);
+    navStatusService_ = navStatusService;
+    serviceList.emplace_back(navStatusService);
+    std::shared_ptr<MediaStatusService> mediaStatusService = this->createMediaStatusService(messenger);
+    mediaStatusService_ = mediaStatusService;
+    serviceList.emplace_back(mediaStatusService);
+
     std::shared_ptr<InputService> inputService = this->createInputService(messenger);
     inputService_ = inputService;
     serviceList.emplace_back(inputService);
@@ -126,6 +136,16 @@ IService::Pointer ServiceFactory::createBluetoothService(aasdk::messenger::IMess
     }
 
     return std::make_shared<BluetoothService>(ioService_, messenger, std::move(bluetoothDevice));
+}
+
+std::shared_ptr<NavigationStatusService> ServiceFactory::createNavigationStatusService(aasdk::messenger::IMessenger::Pointer messenger)
+{
+    return std::make_shared<NavigationStatusService>(ioService_, messenger, aa_interface_);
+}
+
+std::shared_ptr<MediaStatusService> ServiceFactory::createMediaStatusService(aasdk::messenger::IMessenger::Pointer messenger)
+{
+    return std::make_shared<MediaStatusService>(ioService_, messenger, aa_interface_);
 }
 
 std::shared_ptr<InputService> ServiceFactory::createInputService(aasdk::messenger::IMessenger::Pointer messenger)
@@ -218,6 +238,20 @@ void ServiceFactory::resize()
     }
 #endif
 }
+void ServiceFactory::setAndroidAutoInterface(IAndroidAutoInterface* aa_interface){
+    if(aa_interface==NULL) return;
+    this->aa_interface_ = aa_interface;
+
+    if(std::shared_ptr<MediaStatusService> mediaStatusService = mediaStatusService_.lock())
+    {
+        mediaStatusService->setAndroidAutoInterface(aa_interface);
+    }
+    if(std::shared_ptr<NavigationStatusService> navStatusService = navStatusService_.lock())
+    {
+        navStatusService->setAndroidAutoInterface(aa_interface);
+    }
+
+}
 
 void ServiceFactory::setNightMode(bool nightMode)
 {
@@ -228,12 +262,12 @@ void ServiceFactory::setNightMode(bool nightMode)
     }
 }
 
-void ServiceFactory::sendButtonPress(aasdk::proto::enums::ButtonCode::Enum buttonCode, projection::WheelDirection wheelDirection)
+void ServiceFactory::sendButtonPress(aasdk::proto::enums::ButtonCode::Enum buttonCode, projection::WheelDirection wheelDirection, projection::ButtonEventType buttonEventType)
 {
     if(std::shared_ptr<InputService> inputService = inputService_.lock())
     {
         
-        inputService->sendButtonPress(buttonCode, wheelDirection);
+        inputService->sendButtonPress(buttonCode, wheelDirection, buttonEventType);
     }
 }
 
