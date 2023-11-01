@@ -55,12 +55,12 @@ bool RtAudioOutput::open()
         }
         catch(const RtAudioError& e)
         {
-            OPENAUTO_LOG(error) << "[RtAudioOutput] Failed to open audio output, what: " << e.what();
+            LOG(error) << "Failed to open audio output, what: " << e.what();
         }
     }
     else
     {
-        OPENAUTO_LOG(error) << "[RtAudioOutput] No output devices found.";
+        LOG(error) << "No output devices found.";
     }
 
     return false;
@@ -83,7 +83,7 @@ void RtAudioOutput::start()
         }
         catch(const RtAudioError& e)
         {
-            OPENAUTO_LOG(error) << "[RtAudioOutput] Failed to start audio output, what: " << e.what();
+            LOG(error) << "Failed to start audio output, what: " << e.what();
         }
     }
 }
@@ -130,7 +130,7 @@ void RtAudioOutput::doSuspend()
         }
         catch(const RtAudioError& e)
         {
-            OPENAUTO_LOG(error) << "[RtAudioOutput] Failed to suspend audio output, what: " << e.what();
+            LOG(error) << "Failed to suspend audio output, what: " << e.what();
         }
     }
 }

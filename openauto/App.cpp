@@ -55,13 +55,13 @@ void App::waitForDevice(bool enumerate)
 
 void App::start(aasdk::tcp::ITCPEndpoint::SocketPointer socket)
 {
-    OPENAUTO_LOG(info) << "[App] Wireless Device connected.";
+    LOG(info) << "Wireless Device connected.";
 
     strand_.dispatch([this, self = this->shared_from_this(), socket = std::move(socket)]() mutable {
         if(androidAutoEntity_ != nullptr)
         {
             tcpWrapper_.close(*socket);
-            OPENAUTO_LOG(warning) << "[App] android auto entity is still running.";
+            LOG(warning) << "android auto entity is still running.";
             return;
         }
 
@@ -76,7 +76,7 @@ void App::start(aasdk::tcp::ITCPEndpoint::SocketPointer socket)
         }
         catch(const aasdk::error::Error& error)
         {
-            OPENAUTO_LOG(error) << "[App] TCP AndroidAutoEntity create error: " << error.what();
+            LOG(error) << "TCP AndroidAutoEntity create error: " << error.what();
 
             androidAutoEntity_.reset();
             this->waitForDevice();
@@ -101,11 +101,11 @@ void App::stop()
 
 void App::aoapDeviceHandler(aasdk::usb::DeviceHandle deviceHandle)
 {
-    OPENAUTO_LOG(info) << "[App] USB Device connected.";
+    LOG(info) << "USB Device connected.";
 
     if(androidAutoEntity_ != nullptr)
     {
-        OPENAUTO_LOG(warning) << "[App] android auto entity is still running.";
+        LOG(warning) << "android auto entity is still running.";
         return;
     }
 
@@ -119,7 +119,7 @@ void App::aoapDeviceHandler(aasdk::usb::DeviceHandle deviceHandle)
     }
     catch(const aasdk::error::Error& error)
     {
-        OPENAUTO_LOG(error) << "[App] USB AndroidAutoEntity create error: " << error.what();
+        LOG(error) << "USB AndroidAutoEntity create error: " << error.what();
 
         androidAutoEntity_.reset();
         this->waitForDevice();
@@ -130,10 +130,10 @@ void App::enumerateDevices()
 {
     auto promise = aasdk::usb::IConnectedAccessoriesEnumerator::Promise::defer(strand_);
     promise->then([this, self = this->shared_from_this()](auto result) {
-            OPENAUTO_LOG(info) << "[App] Devices enumeration result: " << result;
+            LOG(info) << "Devices enumeration result: " << result;
         },
         [this, self = this->shared_from_this()](auto e) {
-            OPENAUTO_LOG(error) << "[App] Devices enumeration failed: " << e.what();
+            LOG(error) << "Devices enumeration failed: " << e.what();
         });
 
     connectedAccessoriesEnumerator_->enumerate(std::move(promise));
@@ -141,7 +141,7 @@ void App::enumerateDevices()
 
 void App::waitForUSBDevice()
 {
-    OPENAUTO_LOG(info) << "[App] Waiting for USB device...";
+    LOG(info) << "Waiting for USB device...";
 
     auto promise = aasdk::usb::IUSBHub::Promise::defer(strand_);
     promise->then(std::bind(&App::aoapDeviceHandler, this->shared_from_this(), std::placeholders::_1),
@@ -151,7 +151,7 @@ void App::waitForUSBDevice()
 
 void App::waitForWirelessDevice()
 {
-    OPENAUTO_LOG(info) << "[App] Waiting for Wireless device...";
+    LOG(info) << "Waiting for Wireless device...";
 
     auto socket = std::make_shared<boost::asio::ip::tcp::socket>(ioService_);
     acceptor_.async_accept(*socket, [this, socket](const boost::system::error_code &) { this->start(socket); });
@@ -160,7 +160,7 @@ void App::waitForWirelessDevice()
 void App::onAndroidAutoQuit()
 {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-        OPENAUTO_LOG(info) << "[App] quit.";
+        LOG(info) << "quit.";
 
         androidAutoEntity_->stop();
         androidAutoEntity_.reset();
@@ -174,7 +174,7 @@ void App::onAndroidAutoQuit()
 
 void App::onUSBHubError(const aasdk::error::Error& error)
 {
-    OPENAUTO_LOG(error) << "[App] usb hub error: " << error.what();
+    LOG(error) << "usb hub error: " << error.what();
 
     if(error != aasdk::error::ErrorCode::OPERATION_ABORTED &&
        error != aasdk::error::ErrorCode::OPERATION_IN_PROGRESS)

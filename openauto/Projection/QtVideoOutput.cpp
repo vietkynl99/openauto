@@ -38,7 +38,7 @@ QtVideoOutput::QtVideoOutput(configuration::IConfiguration::Pointer configuratio
 
 void QtVideoOutput::createVideoOutput()
 {
-    OPENAUTO_LOG(debug) << "[QtVideoOutput] create.";
+    LOG(debug) << "create.";
     videoWidget_ = std::make_unique<QVideoWidget>(videoContainer_);
     mediaPlayer_ = std::make_unique<QMediaPlayer>(nullptr, QMediaPlayer::StreamPlayback);
 }

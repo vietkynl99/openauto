@@ -55,6 +55,10 @@ GSTVideoOutput::GSTVideoOutput(configuration::IConfiguration::Pointer configurat
     vidLaunchStr += " ! videocrop top=0 bottom=0 name=videocropper ! capsfilter caps=video/x-raw name=mycapsfilter";
     
     vidPipeline_ = gst_parse_launch(vidLaunchStr.c_str(), &error);
+    if (error) {
+        LOG(error) << "Error creating video output: " << error->message;
+        g_error_free(error);
+    }
     GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(vidPipeline_));
     gst_bus_add_watch(bus, (GstBusFunc)&GSTVideoOutput::busCallback, this);
     gst_object_unref(bus);
@@ -90,18 +94,18 @@ H264_Decoder GSTVideoOutput::findPreferredVideoDecoder()
         GstElementFactory *decoder_factory = gst_element_factory_find (ToString(decoder));
         if(decoder_factory != nullptr){
             gst_object_unref(decoder_factory);
-            OPENAUTO_LOG(info) << "[GSTVideoOutput] Selecting the " << ToString(decoder) << " h264 decoder";
+            LOG(info) << "Selecting the " << ToString(decoder) << " h264 decoder";
             return decoder;
         }
     }
-    OPENAUTO_LOG(error) << "[GSTVideoOutput] Couldn't find a decoder to use!";
+    LOG(error) << "Couldn't find a decoder to use!";
     return H264_Decoder::unknown;
 }
 
 void GSTVideoOutput::dumpDot()
 {    
     gst_debug_bin_to_dot_file(GST_BIN(vidPipeline_), GST_DEBUG_GRAPH_SHOW_VERBOSE, "pipeline");
-    OPENAUTO_LOG(info) << "[GSTVideoOutput] Dumped dot debug info";
+    LOG(info) << "Dumped dot debug info";
 }
 
 gboolean GSTVideoOutput::busCallback(GstBus*, GstMessage* message, gpointer*)
@@ -114,20 +118,20 @@ gboolean GSTVideoOutput::busCallback(GstBus*, GstMessage* message, gpointer*)
     {
     case GST_MESSAGE_ERROR:
         gst_message_parse_error(message, &err, &debug);
-        OPENAUTO_LOG(info) << "[GSTVideoOutput] Error " << err->message;
+        LOG(info) << "Error " << err->message;
         g_error_free(err);
         g_free(debug);
         break;
     case GST_MESSAGE_WARNING:
         gst_message_parse_warning(message, &err, &debug);
-        OPENAUTO_LOG(info) << "[GSTVideoOutput] Warning " << err->message << " | Debug " << debug;
+        LOG(info) << "Warning " << err->message << " | Debug " << debug;
         name = (gchar*)GST_MESSAGE_SRC_NAME(message);
-        OPENAUTO_LOG(info) << "[GSTVideoOutput] Name of src " << (name ? name : "nil");
+        LOG(info) << "Name of src " << (name ? name : "nil");
         g_error_free(err);
         g_free(debug);
         break;
     case GST_MESSAGE_EOS:
-        OPENAUTO_LOG(info) << "[GSTVideoOutput] End of stream";
+        LOG(info) << "End of stream";
         break;
     case GST_MESSAGE_STATE_CHANGED:
     default:
@@ -159,8 +163,8 @@ GstPadProbeReturn GSTVideoOutput::convertProbe(GstPad* pad, GstPadProbeInfo* inf
             {
                 GstVideoInfo* vinfo = gst_video_info_new();
                 gst_video_info_from_caps(vinfo, caps);
-                OPENAUTO_LOG(info) << "[GSTVideoOutput] Video Width: " << vinfo->width;
-                OPENAUTO_LOG(info) << "[GSTVideoOutput] Video Height: " << vinfo->height;
+                LOG(info) << "Video Width: " << vinfo->width;
+                LOG(info) << "Video Height: " << vinfo->height;
             }
 
             return GST_PAD_PROBE_REMOVE;
@@ -172,7 +176,7 @@ GstPadProbeReturn GSTVideoOutput::convertProbe(GstPad* pad, GstPadProbeInfo* inf
 
 bool GSTVideoOutput::init()
 {
-    OPENAUTO_LOG(info) << "[GSTVideoOutput] init";
+    LOG(info) << "init";
     emit startPlayback();
 
     return true;
@@ -241,7 +245,7 @@ void GSTVideoOutput::write(uint64_t timestamp, const aasdk::common::DataConstBuf
         int ret = gst_app_src_push_buffer((GstAppSrc*)vidSrc_, buffer_);
         if(ret != GST_FLOW_OK)
         {
-            OPENAUTO_LOG(info) << "[GSTVideoOutput] Injecting header failed";
+            LOG(info) << "Injecting header failed";
         }
 
         // then check if there's data we need to save
@@ -254,11 +258,11 @@ void GSTVideoOutput::write(uint64_t timestamp, const aasdk::common::DataConstBuf
                 int ret = gst_app_src_push_buffer((GstAppSrc*)vidSrc_, buffer_);
                 if(ret != GST_FLOW_OK)
                 {
-                    OPENAUTO_LOG(info) << "[GSTVideoOutput] Injecting partial header failed";
+                    LOG(info) << "Injecting partial header failed";
                 }
             }
         }
-        OPENAUTO_LOG(info) << "[GSTVideoOutput] Intercepted and replaced h264 header";
+        LOG(info) << "Intercepted and replaced h264 header";
 
         firstHeaderParsed=true;
     }
@@ -269,7 +273,7 @@ void GSTVideoOutput::write(uint64_t timestamp, const aasdk::common::DataConstBuf
         int ret = gst_app_src_push_buffer((GstAppSrc*)vidSrc_, buffer_);
         if(ret != GST_FLOW_OK)
         {
-            OPENAUTO_LOG(info) << "[GSTVideoOutput] push buffer returned " << ret << " for " << buffer.size << "bytes";
+            LOG(info) << "push buffer returned " << ret << " for " << buffer.size << "bytes";
         }
     }
 }
@@ -284,14 +288,14 @@ void GSTVideoOutput::onStartPlayback()
 
     if(videoContainer_ == nullptr)
     {
-        OPENAUTO_LOG(info) << "[GSTVideoOutput] No video container, setting projection fullscreen";
+        LOG(error) << "No video container, setting projection fullscreen";
         videoWidget_->setFocus();
         videoWidget_->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint);
         videoWidget_->showFullScreen();
     }
     else
     {
-        OPENAUTO_LOG(info) << "[GSTVideoOutput] Resizing to video container";
+        LOG(info) << "Resizing to video container";
         videoWidget_->resize(videoContainer_->size());
     }
     videoWidget_->show();
@@ -312,14 +316,14 @@ void GSTVideoOutput::onStopPlayback()
         activeCallback_(false);
     }
 
-    OPENAUTO_LOG(info) << "[GSTVideoOutput] stop.";
+    LOG(info) << "stop.";
     gst_element_set_state(vidPipeline_, GST_STATE_PAUSED);
     videoWidget_->hide();
 }
 
 void GSTVideoOutput::resize()
 {
-    OPENAUTO_LOG(info) << "[GSTVideoOutput] Got resize request to "<< videoContainer_->width() << "x" << videoContainer_->height();
+    LOG(info) << "Got resize request to "<< videoContainer_->width() << "x" << videoContainer_->height();
 
     if(videoWidget_ != nullptr && videoContainer_ != nullptr)
     {
@@ -363,7 +367,7 @@ void GSTVideoOutput::resize()
     }
     
 
-    OPENAUTO_LOG(info) << "[GSTVideoOutput] Android Auto is "<< width << "x" << height << ", calculated margins of: " << marginWidth << "x" << marginHeight;
+    LOG(info) << "Android Auto is "<< width << "x" << height << ", calculated margins of: " << marginWidth << "x" << marginHeight;
     g_object_set(vidCrop_, "top", (int)marginHeight, nullptr);
     g_object_set(vidCrop_, "bottom", (int)marginHeight, nullptr);
     g_object_set(vidCrop_, "left", (int)marginWidth, nullptr);

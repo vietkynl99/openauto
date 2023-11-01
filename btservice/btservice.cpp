@@ -17,25 +17,25 @@ btservice::btservice(openauto::configuration::IConfiguration::Pointer config)
     }
     else
     {
-        OPENAUTO_LOG(error) << "[btservice] No adapter found.";
+        LOG(error) << "No adapter found.";
     }
 
     if(!androidBluetoothServer_.start(address, cServicePortNumber))
     {
-        OPENAUTO_LOG(error) << "[btservice] Server start failed.";
+        LOG(error) << "Server start failed.";
         return;
     }
 
-    OPENAUTO_LOG(info) << "[btservice] Listening for connections, address: " << address.toString().toStdString()
+    LOG(info) << "Listening for connections, address: " << address.toString().toStdString()
                        << ", port: " << cServicePortNumber;
 
     if(!androidBluetoothService_.registerService(address))
     {
-        OPENAUTO_LOG(error) << "[btservice] Service registration failed.";
+        LOG(error) << "Service registration failed.";
     }
     else
     {
-        OPENAUTO_LOG(info) << "[btservice] Service registered, port: " << cServicePortNumber;
+        LOG(info) << "Service registered, port: " << cServicePortNumber;
     }
     if(config->getAutoconnectBluetooth())
         connectToBluetooth(QBluetoothAddress(QString::fromStdString(config->getLastBluetoothPair())), address);
@@ -66,13 +66,13 @@ void btservice::connectToBluetooth(QBluetoothAddress addr, QBluetoothAddress con
 #ifdef RPI
 //    QString program = QString::fromStdString("sudo hcitool cc ")+addr.toString();
 //    btConnectProcess = new QProcess();
-//    OPENAUTO_LOG(info)<<"[btservice] Attempting to connect to last bluetooth device, "<<addr.toString().toStdString()<<" using hcitool/bluetoothctl hybrid";
+//    LOG(info)<<"Attempting to connect to last bluetooth device, "<<addr.toString().toStdString()<<" using hcitool/bluetoothctl hybrid";
 //    btConnectProcess->start(program, QProcess::Unbuffered | QProcess::ReadWrite);
 //    btConnectProcess->waitForFinished();
 #endif
     btConnectProcess = new QProcess();
     btConnectProcess->setProcessChannelMode(QProcess::SeparateChannels);
-    OPENAUTO_LOG(info)<<"[btservice] Attempting to connect to last bluetooth device, "<<addr.toString().toStdString()<<" with bluetoothctl";
+    LOG(info)<<"Attempting to connect to last bluetooth device, "<<addr.toString().toStdString()<<" with bluetoothctl";
     btConnectProcess->start("bluetoothctl");
     btConnectProcess->waitForStarted();
     btConnectProcess->write(QString("select %1\n").arg(controller.toString()).toUtf8());

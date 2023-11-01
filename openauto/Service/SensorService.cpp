@@ -36,7 +36,7 @@ SensorService::SensorService(boost::asio::io_service& ioService, aasdk::messenge
 void SensorService::start()
 {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-        OPENAUTO_LOG(info) << "[SensorService] start.";
+        LOG(info) << "start.";
         channel_->receive(this->shared_from_this());
     });
 }
@@ -44,13 +44,13 @@ void SensorService::start()
 void SensorService::stop()
 {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-        OPENAUTO_LOG(info) << "[SensorService] stop.";
+        LOG(info) << "stop.";
     });
 }
 
 void SensorService::fillFeatures(aasdk::proto::messages::ServiceDiscoveryResponse& response)
 {
-    OPENAUTO_LOG(info) << "[SensorService] fill features.";
+    LOG(info) << "fill features.";
 
     auto* channelDescriptor = response.add_channels();
     channelDescriptor->set_channel_id(static_cast<uint32_t>(channel_->getId()));
@@ -62,9 +62,9 @@ void SensorService::fillFeatures(aasdk::proto::messages::ServiceDiscoveryRespons
 
 void SensorService::onChannelOpenRequest(const aasdk::proto::messages::ChannelOpenRequest& request)
 {
-    OPENAUTO_LOG(info) << "[SensorService] open request, priority: " << request.priority();
+    LOG(info) << "open request, priority: " << request.priority();
     const aasdk::proto::enums::Status::Enum status = aasdk::proto::enums::Status::OK;
-    OPENAUTO_LOG(info) << "[SensorService] open status: " << status;
+    LOG(info) << "open status: " << status;
 
     aasdk::proto::messages::ChannelOpenResponse response;
     response.set_status(status);
@@ -78,7 +78,7 @@ void SensorService::onChannelOpenRequest(const aasdk::proto::messages::ChannelOp
 
 void SensorService::onSensorStartRequest(const aasdk::proto::messages::SensorStartRequestMessage& request)
 {
-    OPENAUTO_LOG(info) << "[SensorService] sensor start request, type: " << request.sensor_type();
+    LOG(info) << "sensor start request, type: " << request.sensor_type();
 
     aasdk::proto::messages::SensorStartResponseMessage response;
     response.set_status(aasdk::proto::enums::Status::OK);
@@ -126,7 +126,7 @@ void SensorService::sendNightData()
 
 void SensorService::onChannelError(const aasdk::error::Error& e)
 {
-    OPENAUTO_LOG(error) << "[SensorService] channel error: " << e.what();
+    LOG(error) << "channel error: " << e.what();
 }
 
 void SensorService::setNightMode(bool nightMode)

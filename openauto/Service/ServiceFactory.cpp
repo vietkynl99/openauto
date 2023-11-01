@@ -64,7 +64,7 @@ ServiceFactory::ServiceFactory(boost::asio::io_service& ioService, configuration
     , btservice_(configuration_)
     , nightMode_(nightMode)
 {
-    OPENAUTO_LOG(info) << "SERVICE FACTORY INITED";
+    LOG(info) << "SERVICE FACTORY INITED";
 
 }
 

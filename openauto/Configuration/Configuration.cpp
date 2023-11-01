@@ -117,7 +117,7 @@ void Configuration::load()
     }
     catch(const boost::property_tree::ini_parser_error& e)
     {
-        OPENAUTO_LOG(warning) << "[Configuration] failed to read configuration file: " << cConfigFileName
+        LOG(warning) << "failed to read configuration file: " << cConfigFileName
                             << ", error: " << e.what()
                             << ". Using default configuration.";
         this->reset();

@@ -30,13 +30,13 @@ InputService::InputService(boost::asio::io_service& ioService, aasdk::messenger:
     , channel_(std::make_shared<aasdk::channel::input::InputServiceChannel>(strand_, std::move(messenger)))
     , inputDevice_(std::move(inputDevice))
 {
-    OPENAUTO_LOG(info) << "[InputService] Created";
+    LOG(info) << "Created";
 }
 
 void InputService::start()
 {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-        OPENAUTO_LOG(info) << "[InputService] start.";
+        LOG(info) << "start.";
         channel_->receive(this->shared_from_this());
     });
     serviceActive = true;
@@ -45,7 +45,7 @@ void InputService::start()
 void InputService::stop()
 {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-        OPENAUTO_LOG(info) << "[InputService] stop.";
+        LOG(info) << "stop.";
         inputDevice_->stop();
     });
     serviceActive = false;
@@ -53,7 +53,7 @@ void InputService::stop()
 
 void InputService::fillFeatures(aasdk::proto::messages::ServiceDiscoveryResponse& response)
 {
-    OPENAUTO_LOG(info) << "[InputService] fill features.";
+    LOG(info) << "fill features.";
 
     auto* channelDescriptor = response.add_channels();
     channelDescriptor->set_channel_id(static_cast<uint32_t>(channel_->getId()));
@@ -79,9 +79,9 @@ void InputService::fillFeatures(aasdk::proto::messages::ServiceDiscoveryResponse
 
 void InputService::onChannelOpenRequest(const aasdk::proto::messages::ChannelOpenRequest& request)
 {
-    OPENAUTO_LOG(info) << "[InputService] open request, priority: " << request.priority();
+    LOG(info) << "open request, priority: " << request.priority();
     const aasdk::proto::enums::Status::Enum status = aasdk::proto::enums::Status::OK;
-    OPENAUTO_LOG(info) << "[InputService] open status: " << status;
+    LOG(info) << "open status: " << status;
 
     aasdk::proto::messages::ChannelOpenResponse response;
     response.set_status(status);
@@ -95,7 +95,7 @@ void InputService::onChannelOpenRequest(const aasdk::proto::messages::ChannelOpe
 
 void InputService::onBindingRequest(const aasdk::proto::messages::BindingRequest& request)
 {
-    OPENAUTO_LOG(info) << "[InputService] binding request, scan codes count: " << request.scan_codes_size();
+    LOG(info) << "binding request, scan codes count: " << request.scan_codes_size();
 
     aasdk::proto::enums::Status::Enum status = aasdk::proto::enums::Status::OK;
     const auto& supportedButtonCodes = inputDevice_->getSupportedButtonCodes();
@@ -104,7 +104,7 @@ void InputService::onBindingRequest(const aasdk::proto::messages::BindingRequest
     {
         if(std::find(supportedButtonCodes.begin(), supportedButtonCodes.end(), request.scan_codes(i)) == supportedButtonCodes.end())
         {
-            OPENAUTO_LOG(error) << "[InputService] binding request, scan code: " << request.scan_codes(i)
+            LOG(error) << "binding request, scan code: " << request.scan_codes(i)
                                 << " is not supported.";
 
             status = aasdk::proto::enums::Status::FAIL;
@@ -120,7 +120,7 @@ void InputService::onBindingRequest(const aasdk::proto::messages::BindingRequest
         inputDevice_->start(*this);
     }
 
-    OPENAUTO_LOG(info) << "[InputService] binding request, status: " << status;
+    LOG(info) << "binding request, status: " << status;
 
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {}, std::bind(&InputService::onChannelError, this->shared_from_this(), std::placeholders::_1));
@@ -130,7 +130,7 @@ void InputService::onBindingRequest(const aasdk::proto::messages::BindingRequest
 
 void InputService::onChannelError(const aasdk::error::Error& e)
 {
-    OPENAUTO_LOG(error) << "[InputService] channel error: " << e.what();
+    LOG(error) << "channel error: " << e.what();
 }
 
 void InputService::onButtonEvent(const projection::ButtonEvent& event)
@@ -165,7 +165,7 @@ void InputService::onButtonEvent(const projection::ButtonEvent& event)
 
 void InputService::sendButtonPress(aasdk::proto::enums::ButtonCode::Enum buttonCode, projection::WheelDirection wheelDirection, projection::ButtonEventType buttonEventType)
 {    
-    OPENAUTO_LOG(info) << "[InputService] injecting button press";
+    LOG(info) << "injecting button press";
     if(buttonCode == aasdk::proto::enums::ButtonCode::SCROLL_WHEEL)
     {
         onButtonEvent({projection::ButtonEventType::NONE, wheelDirection, buttonCode});

@@ -72,9 +72,11 @@ int main(int argc, char* argv[])
     libusb_context* usbContext;
     if(libusb_init(&usbContext) != 0)
     {
-        OPENAUTO_LOG(error) << "[OpenAuto] libusb init failed.";
+        LOG(error) << "libusb init failed.";
         return 1;
     }
+
+    OpenAutoLog::init();
 
     boost::asio::io_service ioService;
     boost::asio::io_service::work work(ioService);

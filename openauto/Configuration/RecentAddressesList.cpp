@@ -84,7 +84,7 @@ void RecentAddressesList::load()
     }
     catch(const boost::property_tree::ini_parser_error& e)
     {
-        OPENAUTO_LOG(warning) << "[RecentAddressesList] failed to read configuration file: " << cConfigFileName
+        LOG(warning) << "failed to read configuration file: " << cConfigFileName
                             << ", error: " << e.what()
                             << ". Empty list will be used.";
     }

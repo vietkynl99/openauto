@@ -45,7 +45,7 @@ QtAudioInput::QtAudioInput(uint32_t channelCount, uint32_t sampleSize, uint32_t 
 
 void QtAudioInput::createAudioInput()
 {
-    OPENAUTO_LOG(debug) << "[AudioInput] create.";
+    LOG(debug) << "create.";
     audioInput_ = (std::make_unique<QAudioInput>(QAudioDeviceInfo::defaultInputDevice(), audioFormat_));
 }
 

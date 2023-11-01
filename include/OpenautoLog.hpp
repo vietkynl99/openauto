@@ -18,6 +18,33 @@
 
 #pragma once
 
+#include <iostream>
+#include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/utility/setup/console.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
 
-#define OPENAUTO_LOG(severity) BOOST_LOG_TRIVIAL(severity) << "[OpenAuto] "
+#define ADDITIONAL_TAG "OPENAUTO"
+
+#define LOG(severity) BOOST_LOG_TRIVIAL(severity) << "\t[" << gettid() << "][" ADDITIONAL_TAG "][" << \
+                        __FILE_NAME__ << ":" << __LINE__ << "][" << __FUNCTION__ << "] "
+
+class OpenAutoLog
+{
+public:
+    static void init()
+    {
+        boost::log::register_simple_formatter_factory<boost::log::trivial::severity_level, char>("Severity");
+
+        boost::log::add_console_log(
+            std::cout,
+            boost::log::keywords::format = "[%TimeStamp%] [%Severity%] %Message%");
+
+#if 0
+        boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
+#endif
+
+        boost::log::add_common_attributes();
+    }
+};

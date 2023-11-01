@@ -20,7 +20,7 @@ NavigationStatusService::NavigationStatusService(boost::asio::io_service& ioServ
 void NavigationStatusService::start()
 {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-        OPENAUTO_LOG(info) << "[NavigationStatusService] start.";
+        LOG(info) << "start.";
         channel_->receive(this->shared_from_this());
     });
 }
@@ -28,13 +28,13 @@ void NavigationStatusService::start()
 void NavigationStatusService::stop()
 {
     strand_.dispatch([this, self = this->shared_from_this()]() {
-        OPENAUTO_LOG(info) << "[NavigationStatusService] stop.";
+        LOG(info) << "stop.";
     });
 }
 
 void NavigationStatusService::fillFeatures(aasdk::proto::messages::ServiceDiscoveryResponse& response)
 {
-    OPENAUTO_LOG(info) << "[NavigationStatusService] fill features";
+    LOG(info) << "fill features";
 
     auto* channelDescriptor = response.add_channels();
     channelDescriptor->set_channel_id(static_cast<uint32_t>(channel_->getId()));
@@ -51,9 +51,9 @@ void NavigationStatusService::fillFeatures(aasdk::proto::messages::ServiceDiscov
 
 void NavigationStatusService::onChannelOpenRequest(const aasdk::proto::messages::ChannelOpenRequest& request)
 {
-    OPENAUTO_LOG(info) << "[NavigationStatusService] open request, priority: " << request.priority();
+    LOG(info) << "open request, priority: " << request.priority();
     const aasdk::proto::enums::Status::Enum status = aasdk::proto::enums::Status::OK;
-    OPENAUTO_LOG(info) << "[NavigationStatusService] open status: " << status;
+    LOG(info) << "open status: " << status;
 
     aasdk::proto::messages::ChannelOpenResponse response;
     response.set_status(status);
@@ -68,12 +68,12 @@ void NavigationStatusService::onChannelOpenRequest(const aasdk::proto::messages:
 
 void NavigationStatusService::onChannelError(const aasdk::error::Error& e)
 {
-    OPENAUTO_LOG(error) << "[NavigationStatusService] channel error: " << e.what();
+    LOG(error) << "channel error: " << e.what();
 }
 
 void NavigationStatusService::onStatusUpdate(const aasdk::proto::messages::NavigationStatus& navStatus)
 {
-    OPENAUTO_LOG(info) << "[NavigationStatusService] Navigation Status Update"
+    LOG(info) << "Navigation Status Update"
                        << ", Status: " <<  aasdk::proto::messages::NavigationStatus_Enum_Name(navStatus.status());
     if(aa_interface_ != NULL)
     {
@@ -84,7 +84,7 @@ void NavigationStatusService::onStatusUpdate(const aasdk::proto::messages::Navig
 
 void NavigationStatusService::onTurnEvent(const aasdk::proto::messages::NavigationTurnEvent& turnEvent)
 {
-    OPENAUTO_LOG(info) << "[NavigationStatusService] Turn Event"
+    LOG(info) << "Turn Event"
                        << ", Street: " << turnEvent.street_name()
                        << ", Maneuver: " <<  aasdk::proto::enums::ManeuverDirection_Enum_Name(turnEvent.maneuverdirection()) << " " << aasdk::proto::enums::ManeuverType_Enum_Name(turnEvent.maneuvertype());
     if(aa_interface_ != NULL)
@@ -96,7 +96,7 @@ void NavigationStatusService::onTurnEvent(const aasdk::proto::messages::Navigati
 
 void NavigationStatusService::onDistanceEvent(const aasdk::proto::messages::NavigationDistanceEvent& distanceEvent)
 {
-    OPENAUTO_LOG(info) << "[NavigationStatusService] Distance Event"
+    LOG(info) << "Distance Event"
                        << ", Distance (meters): " << distanceEvent.meters()
                        << ", Time To Turn (seconds): " << distanceEvent.timetostepseconds()
                        << ", Distance: " << distanceEvent.distancetostepmillis()/1000.0

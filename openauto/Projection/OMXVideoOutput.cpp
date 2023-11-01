@@ -73,19 +73,19 @@ bool OMXVideoOutput::open()
 {
     std::lock_guard<decltype(mutex_)> lock(mutex_);
 
-    OPENAUTO_LOG(info) << "[OMXVideoOutput] open.";
+    LOG(info) << "open.";
 
     bcm_host_init();
     if(OMX_Init() != OMX_ErrorNone)
     {
-        OPENAUTO_LOG(error) << "[OMXVideoOutput] omx init failed.";
+        LOG(error) << "omx init failed.";
         return false;
     }
 
     client_ = ilclient_init();
     if(client_ == nullptr)
     {
-        OPENAUTO_LOG(error) << "[OMXVideoOutput] ilclient init failed.";
+        LOG(error) << "ilclient init failed.";
         return false;
     }
 
@@ -96,7 +96,7 @@ bool OMXVideoOutput::open()
 
     if(!this->setupTunnels())
     {
-        OPENAUTO_LOG(error) << "[OMXVideoOutput] setup tunnels failed.";
+        LOG(error) << "setup tunnels failed.";
         return false;
     }
 
@@ -105,7 +105,7 @@ bool OMXVideoOutput::open()
 
     if(!this->enablePortBuffers())
     {
-        OPENAUTO_LOG(error) << "[OMXVideoOutput] enable port buffers failed.";
+        LOG(error) << "enable port buffers failed.";
         return false;
     }
 
@@ -123,7 +123,7 @@ bool OMXVideoOutput::init()
 {
     std::lock_guard<decltype(mutex_)> lock(mutex_);
 
-    OPENAUTO_LOG(info) << "[OMXVideoOutput] init, state: " << isActive_;
+    LOG(info) << "init, state: " << isActive_;
     ilclient_change_component_state(components_[VideoComponent::DECODER], OMX_StateExecuting);
     
     return this->setupDisplayRegion();
@@ -210,7 +210,7 @@ void OMXVideoOutput::write(uint64_t timestamp, const aasdk::common::DataConstBuf
 
 void OMXVideoOutput::stop()
 {
-    OPENAUTO_LOG(info) << "[OMXVideoOutput] stop.";
+    LOG(info) << "stop.";
 
     if(activeCallback_ != nullptr)
     {
@@ -267,31 +267,31 @@ bool OMXVideoOutput::createComponents()
 {
     if(ilclient_create_component(client_, &components_[VideoComponent::DECODER], const_cast<char*>("video_decode"), static_cast<ILCLIENT_CREATE_FLAGS_T>(ILCLIENT_DISABLE_ALL_PORTS | ILCLIENT_ENABLE_INPUT_BUFFERS)) != 0)
     {
-        OPENAUTO_LOG(error) << "[OMXVideoOutput] video decode component creation failed.";
+        LOG(error) << "video decode component creation failed.";
         return false;
     }
 
     if(ilclient_create_component(client_, &components_[VideoComponent::RENDERER], const_cast<char*>("video_render"), ILCLIENT_DISABLE_ALL_PORTS) != 0)
     {
-        OPENAUTO_LOG(error) << "[OMXVideoOutput] video renderer component creation failed.";
+        LOG(error) << "video renderer component creation failed.";
         return false;
     }
 
     if(ilclient_create_component(client_, &components_[VideoComponent::CLOCK], const_cast<char*>("clock"), ILCLIENT_DISABLE_ALL_PORTS) != 0)
     {
-        OPENAUTO_LOG(error) << "[OMXVideoOutput] clock component creation failed.";
+        LOG(error) << "clock component creation failed.";
         return false;
     }
 
     if(!this->initClock())
     {
-        OPENAUTO_LOG(error) << "[OMXVideoOutput] clock init failed.";
+        LOG(error) << "clock init failed.";
         return false;
     }
 
     if(ilclient_create_component(client_, &components_[VideoComponent::SCHEDULER], const_cast<char*>("video_scheduler"), ILCLIENT_DISABLE_ALL_PORTS) != 0)
     {
-        OPENAUTO_LOG(error) << "[OMXVideoOutput] video scheduler component creation failed.";
+        LOG(error) << "video scheduler component creation failed.";
         return false;
     }
 
