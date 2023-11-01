@@ -55,9 +55,14 @@ GSTVideoOutput::GSTVideoOutput(configuration::IConfiguration::Pointer configurat
     vidLaunchStr += " ! videocrop top=0 bottom=0 name=videocropper ! capsfilter caps=video/x-raw name=mycapsfilter";
     
     vidPipeline_ = gst_parse_launch(vidLaunchStr.c_str(), &error);
-    if (error) {
+    if (error)
+    {
         LOG(error) << "Error creating video output: " << error->message;
         g_error_free(error);
+    }
+    else
+    {
+        LOG(debug) << "Created pipeline: " << vidLaunchStr;
     }
     GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(vidPipeline_));
     gst_bus_add_watch(bus, (GstBusFunc)&GSTVideoOutput::busCallback, this);
@@ -104,15 +109,27 @@ H264_Decoder GSTVideoOutput::findPreferredVideoDecoder()
 
 void GSTVideoOutput::dumpDot()
 {    
+    if (!vidPipeline_)
+    {
+        LOG(error) << "Pipeline is null";
+        return;
+    }
+    const char* out_dir = g_getenv("GST_DEBUG_DUMP_DOT_DIR");
+    if (!out_dir) {
+      LOG(error) << "GST_DEBUG_DUMP_DOT_DIR environment variable not set";
+      return;
+    }
+
     gst_debug_bin_to_dot_file(GST_BIN(vidPipeline_), GST_DEBUG_GRAPH_SHOW_VERBOSE, "pipeline");
-    LOG(info) << "Dumped dot debug info";
+    LOG(info) << "Dumped pipeline debug file to " << out_dir;
 }
 
-gboolean GSTVideoOutput::busCallback(GstBus*, GstMessage* message, gpointer*)
+gboolean GSTVideoOutput::busCallback(GstBus* bus, GstMessage* message, gpointer data)
 {
     gchar* debug;
     GError* err;
     gchar* name;
+    GSTVideoOutput* self = static_cast<GSTVideoOutput*>(data);
 
     switch(GST_MESSAGE_TYPE(message))
     {
@@ -126,7 +143,7 @@ gboolean GSTVideoOutput::busCallback(GstBus*, GstMessage* message, gpointer*)
         gst_message_parse_warning(message, &err, &debug);
         LOG(info) << "Warning " << err->message << " | Debug " << debug;
         name = (gchar*)GST_MESSAGE_SRC_NAME(message);
-        LOG(info) << "Name of src " << (name ? name : "nil");
+        LOG(info) << "Name of src " << (name ? name : "null");
         g_error_free(err);
         g_free(debug);
         break;
@@ -134,6 +151,14 @@ gboolean GSTVideoOutput::busCallback(GstBus*, GstMessage* message, gpointer*)
         LOG(info) << "End of stream";
         break;
     case GST_MESSAGE_STATE_CHANGED:
+        GstState old_state, new_state, pending_state;
+        gst_message_parse_state_changed(message, &old_state, &new_state, &pending_state);
+        if (GST_MESSAGE_SRC(message) == GST_OBJECT(self->vidPipeline_))
+        {
+            LOG(debug) << "state change to " << gst_element_state_get_name(new_state) << " from "
+                       << gst_element_state_get_name(old_state) << " with "
+                       << gst_element_state_get_name(pending_state) << " pending";
+        }
     default:
         break;
     }
@@ -143,6 +168,7 @@ gboolean GSTVideoOutput::busCallback(GstBus*, GstMessage* message, gpointer*)
 
 bool GSTVideoOutput::open()
 {
+    LOG(info);
     GstElement* capsFilter = gst_bin_get_by_name(GST_BIN(vidPipeline_), "mycapsfilter");
     GstPad* convertPad = gst_element_get_static_pad(capsFilter, "sink");
     gst_pad_add_probe(convertPad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, &GSTVideoOutput::convertProbe, this, nullptr);
@@ -316,8 +342,11 @@ void GSTVideoOutput::onStopPlayback()
         activeCallback_(false);
     }
 
-    LOG(info) << "stop.";
-    gst_element_set_state(vidPipeline_, GST_STATE_PAUSED);
+    LOG(info);
+    if (vidPipeline_)
+    {
+        gst_element_set_state(vidPipeline_, GST_STATE_NULL);
+    }
     videoWidget_->hide();
 }
 
@@ -345,6 +374,11 @@ void GSTVideoOutput::resize()
             height = 720;
             break;
         case aasdk::proto::enums::VideoResolution_Enum__480p:
+            width = 800;
+            height = 480;
+            break;
+        default:
+            LOG(info) << "Unhandled video resolution. Set to default 480p";
             width = 800;
             height = 480;
             break;

@@ -116,7 +116,7 @@ public slots:
     void dumpDot();
 private:
     static GstPadProbeReturn convertProbe(GstPad* pad, GstPadProbeInfo* info, void*);
-    static gboolean busCallback(GstBus*, GstMessage* message, gpointer*);
+    static gboolean busCallback(GstBus* bus, GstMessage* message, gpointer data);
     H264_Decoder findPreferredVideoDecoder();
 
     bool firstHeaderParsed = false;
