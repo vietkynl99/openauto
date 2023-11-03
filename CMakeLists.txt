@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5.1)
 
 set (openauto_VERSION_MAJOR 2)
 set (openauto_VERSION_MINOR 1)
-set (openauto_VERSION_PATCH 0)
+set (openauto_VERSION_PATCH 1)
 
 project(openauto 
 VERSION ${openauto_VERSION_MAJOR}.${openauto_VERSION_MINOR}.${openauto_VERSION_PATCH}
