@@ -17,6 +17,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+set(CMAKE_SKIP_RPATH TRUE)
+
 set(base_directory ${CMAKE_CURRENT_SOURCE_DIR})					   
 set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
@@ -51,7 +53,8 @@ find_package(h264 REQUIRED)
 find_package(Threads)
 
 include(${base_directory}/cmake_modules/gitversion.cmake)
-if(RPI_BUILD)
+
+if(RPI_BUILD AND USE_OMX)
     find_package(libomx)
 endif()
 
@@ -87,19 +90,18 @@ add_subdirectory(openauto)
 add_subdirectory(autoapp)
 add_dependencies(autoapp btservice_proto)
 
-set (openauto_VERSION_PATCH ${_build_version})
 set (openauto_VERSION_STRING ${openauto_VERSION_MAJOR}.${openauto_VERSION_MINOR}.${openauto_VERSION_PATCH})
 set_target_properties(openauto PROPERTIES VERSION ${openauto_VERSION_STRING}
                                           SOVERSION ${openauto_VERSION_MAJOR})
 message(INFO " Project Version: ${openauto_VERSION_STRING}")
 
-install(DIRECTORY lib DESTINATION lib COMPONENT libraries)
-install(DIRECTORY include DESTINATION include COMPONENT headers)
-install(DIRECTORY bin DESTINATION bin COMPONENT applications)
+install(DIRECTORY lib/ DESTINATION lib COMPONENT libraries)
+install(DIRECTORY include/ DESTINATION include COMPONENT headers)
+install(DIRECTORY bin/ DESTINATION bin COMPONENT applications)
 
 SET(CPACK_GENERATOR "DEB")
-SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "OpenDsh") #required
-SET(CPACK_PACKAGE_VENDOR "OpenDsh") 
+SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "VietKynl") #required
+SET(CPACK_PACKAGE_VENDOR "VietKynl") 
 set(CPACK_PACKAGE_VERSION ${openauto_VERSION_STRING})
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)

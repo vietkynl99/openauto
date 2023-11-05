@@ -36,7 +36,7 @@ AndroidBluetoothService::AndroidBluetoothService(uint16_t portNumber)
     serviceInfo_.setAttribute(QBluetoothServiceInfo::ServiceClassIds, classId);
     serviceInfo_.setAttribute(QBluetoothServiceInfo::ServiceName, "OpenAuto Bluetooth Service");
     serviceInfo_.setAttribute(QBluetoothServiceInfo::ServiceDescription, "AndroidAuto WiFi projection automatic setup");
-    serviceInfo_.setAttribute(QBluetoothServiceInfo::ServiceProvider, "openDsh");
+    serviceInfo_.setAttribute(QBluetoothServiceInfo::ServiceProvider, "VietKynl");
     serviceInfo_.setServiceUuid(serviceUuid);
 
     QBluetoothServiceInfo::Sequence publicBrowse;

@@ -21,3 +21,5 @@ _deps
 *_autogen/
 *.pb.cc
 *.pb.h
+CPackSourceConfig.cmake
+CPackConfig.cmake
